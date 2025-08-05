@@ -1,0 +1,73 @@
+/* 🚨 긴급 텍스트 방향성 문제 해결 - 전역 적용 */
+* {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  direction: ltr !important;
+  transform: none !important;
+  rotate: none !important;
+  scale: none !important;
+}
+
+/* 🔥 텍스트 문제 강제 해결용 CSS - 세로 배치 문제 완전 차단 */
+
+.left-panel,
+.left-panel *,
+.prompt-generator,
+.prompt-generator *,
+.step-title,
+.step-content,
+.step-content p,
+.step-content h4,
+.step-content li {
+  /* 🚨 텍스트 방향성 강제 수정 - 최우선 */
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  direction: ltr !important;
+  
+  /* 변형 속성 완전 차단 */
+  transform: none !important;
+  rotate: none !important;
+  scale: none !important;
+  
+  word-wrap: break-word !important;
+  word-break: keep-all !important;
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
+  text-overflow: clip !important;
+  font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+  box-sizing: border-box !important;
+  line-height: 1.5 !important;
+}
+
+/* 특별히 문제가 되는 요소들 강제 수정 */
+.step-title span {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  direction: ltr !important;
+  transform: none !important;
+  display: inline !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: break-word !important;
+}
+
+.workshop-instructions,
+.workshop-instructions *,
+.llm-links,
+.llm-links * {
+  /* 🔥 모든 요소 방향성 강제 수정 */
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  direction: ltr !important;
+  transform: none !important;
+  rotate: none !important;
+  scale: none !important;
+  
+  word-wrap: break-word !important;
+  word-break: keep-all !important;
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
+}
