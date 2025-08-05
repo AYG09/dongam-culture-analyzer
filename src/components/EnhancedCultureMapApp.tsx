@@ -57,6 +57,7 @@ interface EnhancedCultureMapAppProps {
   handleMouseDownOnBoard: (e: MouseEvent<HTMLDivElement>) => void;
   handleMouseDownOnNote: (noteId: string, e: MouseEvent<HTMLDivElement>) => void;
   handleMouseDownOnResizeHandle: (noteId: string, e: MouseEvent<HTMLDivElement>) => void;
+  handleMouseDownOnLayerResizeHandle: (layerIndex: number, e: MouseEvent) => void;
   handleUpdateConnection: (id: string, newType: 'direct' | 'indirect') => void;
   handleDeleteConnection: (id: string) => void;
   handleCloseContextMenu: () => void;
@@ -117,6 +118,7 @@ export function EnhancedCultureMapApp({
   handleMouseDownOnBoard,
   handleMouseDownOnNote,
   handleMouseDownOnResizeHandle,
+  handleMouseDownOnLayerResizeHandle,
   handleUpdateConnection,
   handleDeleteConnection,
   handleCloseContextMenu,
@@ -132,7 +134,6 @@ export function EnhancedCultureMapApp({
   handleExportAsJson,
 
   // 층위 시스템 함수
-  onLayerHeightChange,
   setVisualizationOptions,
   setLayerState,
 
@@ -205,10 +206,10 @@ export function EnhancedCultureMapApp({
                   handleConnectionContextMenu={handleConnectionContextMenu}
                   handleMouseDownOnNote={handleMouseDownOnNote}
                   handleMouseDownOnResizeHandle={handleMouseDownOnResizeHandle}
+                  handleMouseDownOnLayerResizeHandle={handleMouseDownOnLayerResizeHandle}
                   handleNoteClick={handleNoteClick}
                   handleUpdateNote={handleUpdateNote}
                   handleNoteContextMenu={handleNoteContextMenu}
-                  onLayerHeightChange={onLayerHeightChange}
                 />
               </div>
             ) : (

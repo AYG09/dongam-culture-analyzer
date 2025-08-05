@@ -389,18 +389,26 @@ export type PerceptionIntensity = '집중' | '관심' | '언급';
 /**
  * 컬쳐맵 노트 데이터
  */
+export type NoteType = '결과' | '행동' | '유형_레버' | '무형_레버' | 'insight';
+
+/**
+ * 컬쳐맵 노트 데이터
+ */
 export interface NoteData {
   id: string;
   text: string;
   position: { x: number; y: number };
   width?: number;
   height?: number;
-  type: 'artifact' | 'behavior' | 'norm_value' | 'assumption' | 'insight';
+  type: NoteType;
   sentiment: 'positive' | 'negative' | 'neutral';
   perceptionIntensity?: PerceptionIntensity; // 구성원 인식 강도 (집중/관심/언급)
-  basis?: string; // 이론적 근거
+  basis?: {
+    author: string;
+    theory: string;
+    year: string;
+  }; // 이론적 근거 (저자, 이론, 연도)
   layer: 1 | 2 | 3 | 4;
-  category?: string;
   connections?: string[]; // 연결된 노트들의 ID
 }
 

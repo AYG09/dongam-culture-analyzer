@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { MouseEvent } from 'react';
-import type { NoteData } from '../types/culture';
+import type { NoteData, PerceptionIntensity, NoteType } from '../types/culture';
 
 interface EnhancedStickyNoteProps {
   note: NoteData;
@@ -20,6 +20,40 @@ interface EnhancedStickyNoteProps {
   animateTransitions?: boolean;
 }
 
+const TypeTag: React.FC<{ type: NoteType }> = ({ type }) => {
+  const typeStyleMap: { [key: string]: { label: string; style: React.CSSProperties } } = {
+    '결과': { label: '결과', style: { backgroundColor: '#F3E8FF', color: '#581C87' } },
+    '행동': { label: '행동', style: { backgroundColor: '#DBEAFE', color: '#1E40AF' } },
+    '유형_레버': { label: '유형', style: { backgroundColor: '#D1FAE5', color: '#065F46' } },
+    '무형_레버': { label: '무형', style: { backgroundColor: '#DBEAFE', color: '#1E40AF' } },
+    'insight': { label: '인사이트', style: { backgroundColor: '#E0E7FF', color: '#3730A3' } },
+    'default': { label: '기타', style: { backgroundColor: '#E5E7EB', color: '#1F2937' } },
+  };
+
+  const { label, style } = typeStyleMap[type] || typeStyleMap['default'];
+
+  return (
+    <div className="tag type-tag" style={style}>
+      {label}
+    </div>
+  );
+};
+
+const PerceptionTag: React.FC<{ intensity: PerceptionIntensity }> = ({ intensity }) => {
+  const perceptionStyles: Record<PerceptionIntensity, React.CSSProperties> = {
+    '집중': { backgroundColor: '#FECACA', color: '#991B1B' }, // red-200, red-800
+    '관심': { backgroundColor: '#FDE68A', color: '#92400E' }, // amber-200, amber-800
+    '언급': { backgroundColor: '#E5E7EB', color: '#1F2937' }, // gray-200, gray-800
+  };
+
+  return (
+    <div className="tag perception-tag" style={perceptionStyles[intensity]}>
+      {intensity}
+    </div>
+  );
+};
+
+
 export const EnhancedStickyNote: React.FC<EnhancedStickyNoteProps> = ({
   note,
   onMouseDown,
@@ -36,23 +70,14 @@ export const EnhancedStickyNote: React.FC<EnhancedStickyNoteProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
-  const getSentimentColor = useCallback(() => {
-    const sentimentColors = {
-      positive: 'rgba(59, 130, 246, 0.9)', // bg-blue-500/90
-      negative: 'rgba(239, 68, 68, 0.9)',  // bg-red-500/90
-      neutral: 'rgba(252, 211, 77, 0.9)', // bg-amber-300/90
+  const getSentimentBorderStyle = useCallback(() => {
+    const sentimentStyles: Record<string, React.CSSProperties> = {
+      positive: { borderColor: '#3B82F6' }, // blue-500
+      negative: { borderColor: '#EF4444' }, // red-500
+      neutral: { borderColor: '#A1A1AA' },  // zinc-400
     };
-    return sentimentColors[note.sentiment] || sentimentColors.neutral;
+    return sentimentStyles[note.sentiment] || sentimentStyles.neutral;
   }, [note.sentiment]);
-
-  const getPerceptionStyle = useCallback(() => {
-    const perceptionStyles: Record<string, React.CSSProperties> = {
-      '집중': { borderColor: '#EF4444', borderWidth: '3px' }, // border-red-500
-      '관심': { borderColor: '#F59E0B', borderWidth: '2px' }, // border-amber-500
-      '언급': { borderColor: '#6B7280', borderWidth: '1px' }, // border-gray-500
-    };
-    return perceptionStyles[note.perceptionIntensity || '언급'] || perceptionStyles['언급'];
-  }, [note.perceptionIntensity]);
 
   const handleEditComplete = useCallback(() => {
     if (contentRef.current) {
@@ -75,6 +100,7 @@ export const EnhancedStickyNote: React.FC<EnhancedStickyNoteProps> = ({
   }, [handleEditComplete, onUpdate, note.id]);
 
   const handleMouseDown = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation(); // 이벤트 전파를 막아 보드 핸들러 방지
     if (isEditing) {
       return;
     }
@@ -82,10 +108,11 @@ export const EnhancedStickyNote: React.FC<EnhancedStickyNoteProps> = ({
   }, [isEditing, onMouseDown]);
 
   const handleClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    // 왼쪽 클릭은 노트 이동에 사용되므로, 감정 상태 변경 로직 제거
+    e.stopPropagation(); // 클릭 이벤트 전파도 막습니다.
     onClick(note.id);
   }, [note.id, onClick]);
+
+  const sentimentBorderStyle = getSentimentBorderStyle();
 
   useEffect(() => {
     if (isEditing && contentRef.current) {
@@ -99,10 +126,12 @@ export const EnhancedStickyNote: React.FC<EnhancedStickyNoteProps> = ({
     left: note.position.x,
     top: note.position.y,
     width: note.width || 200,
-    height: note.height || 120,
-    backgroundColor: getSentimentColor(),
+    height: note.height || 'auto', // 자동 높이
+    minHeight: 120,
+    backgroundColor: 'white',
     borderStyle: 'solid',
-    borderRadius: '8px',
+    borderWidth: '3px',
+    borderRadius: '12px',
     padding: '12px',
     cursor: isEditing ? 'text' : 'grab',
     zIndex: isSelected ? 1000 : note.layer,
@@ -112,7 +141,9 @@ export const EnhancedStickyNote: React.FC<EnhancedStickyNoteProps> = ({
       : isHovered 
       ? '0 3px 10px rgba(0, 0, 0, 0.2)' 
       : '0 1px 4px rgba(0, 0, 0, 0.15)',
-    ...getPerceptionStyle(),
+    display: 'flex',
+    flexDirection: 'column',
+    ...sentimentBorderStyle,
   };
 
   return (
@@ -126,6 +157,11 @@ export const EnhancedStickyNote: React.FC<EnhancedStickyNoteProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      <div className="note-header">
+        <TypeTag type={note.type} />
+        {note.perceptionIntensity && <PerceptionTag intensity={note.perceptionIntensity} />}
+      </div>
+
       <div className="note-content">
         {isEditing ? (
           <textarea
@@ -134,26 +170,18 @@ export const EnhancedStickyNote: React.FC<EnhancedStickyNoteProps> = ({
             onBlur={handleEditComplete}
             onKeyDown={handleKeyDown}
             className="note-textarea"
-            style={{
-              width: '100%',
-              height: '100%',
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              resize: 'none',
-              fontSize: '14px',
-              fontFamily: 'inherit',
-              color: '#111827' // text-gray-900
-            }}
           />
         ) : (
           <>
-            <div className="note-text" style={{ fontSize: '14px', lineHeight: '1.5', color: '#1f2937' /* text-gray-800 */ }}>
+            <div className="note-text">
               {note.text}
             </div>
             {note.basis && (
-              <div className="note-basis" style={{ marginTop: '8px', fontSize: '12px', color: '#4B5563', fontStyle: 'italic' }}>
-                {note.basis}
+              <div className="note-basis">
+                <div className="note-basis-content">
+                  <span>{note.basis.author}, {note.basis.year}</span>
+                  <span className="note-basis-theory">&lt;{note.basis.theory}&gt;</span>
+                </div>
               </div>
             )}
           </>
@@ -177,15 +205,7 @@ export const EnhancedStickyNote: React.FC<EnhancedStickyNoteProps> = ({
           className="resize-handle"
           onMouseDown={onResizeStart}
           style={{
-            position: 'absolute',
-            bottom: -4,
-            right: -4,
-            width: '16px',
-            height: '16px',
-            background: '#3B82F6', // bg-blue-500
-            cursor: 'se-resize',
-            borderRadius: '8px',
-            border: '2px solid white'
+            background: sentimentBorderStyle.borderColor,
           }}
         />
       )}

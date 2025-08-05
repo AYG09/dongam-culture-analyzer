@@ -12,7 +12,7 @@ interface LayerBoundaryGuideProps {
   layerState: LayerSystemState;
   visualizationOptions: LayerVisualizationOptions;
   containerWidth: number;
-  onLayerHeightChange: (layerIndex: number, newHeight: number) => void;
+  onMouseDownOnResizeHandle: (layerIndex: number, e: React.MouseEvent<HTMLDivElement>) => void;
   highlightedLayers?: number[];
 }
 
@@ -20,7 +20,7 @@ export const LayerBoundaryGuide: React.FC<LayerBoundaryGuideProps> = ({
   layerState,
   visualizationOptions,
   containerWidth,
-  onLayerHeightChange,
+  onMouseDownOnResizeHandle,
   highlightedLayers = []
 }) => {
   if (!visualizationOptions.showLayerBoundaries) {
@@ -28,24 +28,7 @@ export const LayerBoundaryGuide: React.FC<LayerBoundaryGuideProps> = ({
   }
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>, layerIndex: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const startY = e.clientY;
-    const startHeight = layerState.boundaries[layerIndex].height;
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const dy = moveEvent.clientY - startY;
-      const newHeight = Math.max(100, startHeight + dy); // 최소 높이 100px
-      onLayerHeightChange(layerIndex, newHeight);
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    onMouseDownOnResizeHandle(layerIndex, e);
   };
 
   const renderLayerLabel = (boundary: LayerBoundary) => {
@@ -70,7 +53,7 @@ export const LayerBoundaryGuide: React.FC<LayerBoundaryGuideProps> = ({
       transition: visualizationOptions.animateTransitions ? 'all 0.3s ease' : 'none',
       zIndex: 10,
       boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-      pointerEvents: 'auto',
+      pointerEvents: 'none',
     };
 
     return (
@@ -80,7 +63,7 @@ export const LayerBoundaryGuide: React.FC<LayerBoundaryGuideProps> = ({
     );
   };
 
-  const renderBoundaryLine = (boundary: LayerBoundary, isLast: boolean) => {
+  const renderBoundary = (boundary: LayerBoundary, isLast: boolean) => {
     if (isLast) return null;
 
     const lineStyle: React.CSSProperties = {
@@ -88,20 +71,30 @@ export const LayerBoundaryGuide: React.FC<LayerBoundaryGuideProps> = ({
       top: `${boundary.yMax}px`,
       left: 0,
       right: 0,
-      height: '5px',
-      backgroundColor: 'rgba(107, 114, 128, 0.2)',
-      cursor: 'ns-resize',
-      transition: visualizationOptions.animateTransitions ? 'all 0.3s ease' : 'none',
-      zIndex: 20,
-      pointerEvents: 'auto',
+      height: '1px',
+      backgroundColor: 'rgba(107, 114, 128, 0.3)',
+      pointerEvents: 'none',
+      zIndex: 5,
+    };
+
+    const handleStyle: React.CSSProperties = {
+        position: 'absolute',
+        top: `${boundary.yMax}px`,
+        left: '10px', // A little padding from the edge
+        transform: 'translateY(-50%)',
+        zIndex: 25,
+        pointerEvents: 'auto', // Make this element interactive
     };
 
     return (
-      <div
-        key={`boundary-${boundary.layerIndex}`}
-        style={lineStyle}
-        onMouseDown={(e) => handleMouseDown(e, boundary.layerIndex)}
-      />
+      <React.Fragment key={`boundary-wrapper-${boundary.layerIndex}`}>
+        <div style={lineStyle} />
+        <div
+          className="layer-resize-handle"
+          style={handleStyle}
+          onMouseDown={(e) => handleMouseDown(e, boundary.layerIndex)}
+        />
+      </React.Fragment>
     );
   };
 
@@ -118,6 +111,7 @@ export const LayerBoundaryGuide: React.FC<LayerBoundaryGuideProps> = ({
       opacity: isHighlighted ? 0.2 : visualizationOptions.layerOpacity,
       transition: visualizationOptions.animateTransitions ? 'all 0.3s ease' : 'none',
       zIndex: 1,
+      pointerEvents: 'none',
     };
 
     return (
@@ -137,13 +131,13 @@ export const LayerBoundaryGuide: React.FC<LayerBoundaryGuideProps> = ({
         left: 0,
         width: containerWidth,
         height: '100%',
-        pointerEvents: 'none',
-        zIndex: 1
+        pointerEvents: 'none', // 자식 요소(핸들)만 이벤트 받도록 설정
+        zIndex: 2 // 배경보다는 위, 노트보다는 아래
       }}
     >
       {layerState.boundaries.map(renderLayerBackground)}
       {layerState.boundaries.map((boundary, index) => 
-        renderBoundaryLine(boundary, index === layerState.boundaries.length - 1)
+        renderBoundary(boundary, index === layerState.boundaries.length - 1)
       )}
       {layerState.boundaries.map(renderLayerLabel)}
     </div>

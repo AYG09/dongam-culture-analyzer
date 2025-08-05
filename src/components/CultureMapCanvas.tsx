@@ -35,7 +35,7 @@ interface CultureMapCanvasProps {
   handleNoteClick: (targetNoteId: string) => void;
   handleUpdateNote: (noteId:string, updates: Partial<NoteData>) => void;
   handleNoteContextMenu: (e: MouseEvent, noteId: string) => void;
-  onLayerHeightChange: (layerIndex: number, newHeight: number) => void;
+  handleMouseDownOnLayerResizeHandle: (layerIndex: number, e: MouseEvent) => void;
 }
 
 export const CultureMapCanvas = ({
@@ -60,7 +60,7 @@ export const CultureMapCanvas = ({
   handleNoteClick,
   handleUpdateNote,
   handleNoteContextMenu,
-  onLayerHeightChange,
+  handleMouseDownOnLayerResizeHandle,
 }: CultureMapCanvasProps) => {
   const boardHeight = layerState.boundaries.reduce((total, b) => total + b.height, 0) + (layerState.boundaries.length * layerState.layerGap);
 
@@ -82,7 +82,7 @@ export const CultureMapCanvas = ({
         visualizationOptions={visualizationOptions}
         containerWidth={5000}
         highlightedLayers={highlightedLayers}
-        onLayerHeightChange={onLayerHeightChange}
+        onMouseDownOnResizeHandle={handleMouseDownOnLayerResizeHandle}
       />
 
       {selection && (

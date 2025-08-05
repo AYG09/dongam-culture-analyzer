@@ -2,6 +2,8 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import type { MouseEvent } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import { saveAs } from 'file-saver';
+import html2canvas from 'html2canvas';
 
 // 컴포넌트
 import { EnhancedCultureMapApp } from './components/EnhancedCultureMapApp';
@@ -13,7 +15,7 @@ import { parseIntelligent } from './utils/intelligentParser';
 import { getLayoutedElements } from './utils/layout';
 
 // 타입 및 설정
-import type { CultureProject, ConnectionData, NoteData } from './types/culture';
+import type { CultureProject, ConnectionData, NoteData, NoteType } from './types/culture';
 import type { Position } from './types';
 import type { 
   LayerSystemState,
@@ -58,6 +60,8 @@ function App() {
   const [layerControlVisible, setLayerControlVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<'map' | 'report'>('map');
   const [analysisReportData, setAnalysisReportData] = useState<any[]>([]);
+  const [resizingLayerIndex, setResizingLayerIndex] = useState<number | null>(null);
+
 
   // 참조
   const boardRef = useRef<HTMLDivElement>(null);
@@ -247,9 +251,31 @@ function App() {
     });
   }, [notes]);
 
+  const handleMouseDownOnLayerResizeHandle = useCallback((layerIndex: number, e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingLayerIndex(layerIndex);
+  }, []);
+
   const handleMouseMove = useCallback((e: MouseEvent<HTMLDivElement> | globalThis.MouseEvent) => {
     const board = boardRef.current;
     if (!board) return;
+
+    if (resizingLayerIndex !== null) {
+      const layer = layerState.boundaries[resizingLayerIndex];
+      if (!layer) return;
+
+      const scrollContainer = scrollContainerRef.current;
+      if (!scrollContainer) return;
+
+      // Get the mouse position relative to the scroll container's top.
+      const scrollRect = scrollContainer.getBoundingClientRect();
+      const mouseY = e.clientY - scrollRect.top + scrollContainer.scrollTop;
+      
+      const newHeight = mouseY - layer.yMin;
+      handleLayerHeightChange(resizingLayerIndex, newHeight);
+      return;
+    }
 
     if (selection && !draggingNote && !multiDragInfo) {
       const scrollContainer = scrollContainerRef.current;
@@ -348,7 +374,7 @@ function App() {
         )
       );
     }
-  }, [draggingNote, resizingNote, panning, selection, notes, multiDragInfo, selectedNoteIds, setNotes, setBoardTransform, setSelection, setSelectedNoteIds]);
+  }, [draggingNote, resizingNote, panning, selection, notes, multiDragInfo, selectedNoteIds, setNotes, setBoardTransform, setSelection, setSelectedNoteIds, resizingLayerIndex, layerState.boundaries, handleLayerHeightChange]);
 
   const handleMouseUp = useCallback(() => {
     if (draggingNote) {
@@ -364,6 +390,7 @@ function App() {
     setPanning(null);
     setSelection(null);
     setMultiDragInfo(null);
+    setResizingLayerIndex(null);
     setTimeout(() => setWasPanning(false), 100);
   }, [draggingNote, panning]);
 
@@ -454,8 +481,8 @@ function App() {
     }
   }, [connectingNoteId]);
 
-  const handleAddNewNote = useCallback((type: NoteData['type'], position: Position) => {
-    const layerConfig = Object.values(LAYER_CONFIG).find(c => c.label.startsWith(type));
+  const handleAddNewNote = useCallback((type: NoteType, position: Position) => {
+    const layerConfig = Object.values(LAYER_CONFIG).find(c => c.label.startsWith(type.split('_')[0]));
     const newNoteId = uuidv4();
     const newNote: NoteData = {
       id: newNoteId, text: '새 포스트잇', type: type, layer: (layerConfig?.index as 1 | 2 | 3 | 4) || 1,
@@ -480,8 +507,8 @@ function App() {
     const rect = board.getBoundingClientRect();
     const x = e.clientX - rect.left + scrollContainer.scrollLeft;
     const y = e.clientY - rect.top + scrollContainer.scrollTop;
-    const contextMenuItems = (['artifact', 'behavior', 'norm_value', 'assumption'] as const).map((type) => ({
-      label: `${type} 포스트잇 추가`,
+    const contextMenuItems = (['결과', '행동', '유형_레버', '무형_레버'] as const).map((type) => ({
+      label: `${type.replace('_레버','')} 포스트잇 추가`,
       action: () => handleAddNewNote(type, { x, y }),
     }));
     setContextMenu({ x: e.clientX, y: e.clientY, items: contextMenuItems });
@@ -513,17 +540,75 @@ function App() {
   }, []);
 
   const handleExportAsImage = useCallback(async () => {
+    const scrollContainer = scrollContainerRef.current;
     const mapElement = boardRef.current;
-    if (!mapElement) return;
-    // 이미지 내보내기 로직 (html2canvas 등)
-  }, []);
+
+    if (!mapElement || !scrollContainer || notes.length === 0) {
+      alert('내보낼 데이터가 없습니다.');
+      return;
+    }
+
+    const originalScrollLeft = scrollContainer.scrollLeft;
+    const originalScrollTop = scrollContainer.scrollTop;
+    scrollContainer.scrollLeft = 0;
+    scrollContainer.scrollTop = 0;
+
+    // DOM 업데이트를 위한 잠시 대기
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    try {
+      let maxX = 0;
+      let maxY = 0;
+
+      notes.forEach(note => {
+        maxX = Math.max(maxX, note.position.x + (note.width || 200));
+        maxY = Math.max(maxY, note.position.y + (note.height || 120));
+      });
+
+      const padding = 150; // 여백을 늘려 레이블이 잘리지 않도록 함
+      
+      const captureWidth = maxX + padding;
+      const captureHeight = Math.max(maxY + padding, layerState.totalHeight + padding);
+
+      const canvas = await html2canvas(mapElement, {
+        useCORS: true,
+        scale: 1.5, // 스케일 조정
+        backgroundColor: '#f0f2f5', // 배경색을 옅은 회색으로 변경
+        width: captureWidth,
+        height: captureHeight,
+        x: 0, // 캡처 시작점을 0으로 고정
+        y: 0,
+        logging: false,
+        onclone: (document) => {
+          // 캡처 시점에만 적용될 스타일
+          const clonedBoard = document.getElementById('enhanced-notes-board');
+          if (clonedBoard) {
+            // 보드의 transform을 제거하여 위치를 고정
+            clonedBoard.style.transform = 'translate(0, 0)';
+          }
+        }
+      });
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          saveAs(blob, 'culture-map-export.png');
+        }
+      });
+    } catch (error) {
+      console.error('이미지 내보내기 오류:', error);
+      alert('이미지를 내보내는 중 오류가 발생했습니다.');
+    } finally {
+      // 스크롤 위치 복원
+      scrollContainer.scrollLeft = originalScrollLeft;
+      scrollContainer.scrollTop = originalScrollTop;
+    }
+  }, [notes, layerState]);
 
   const handleExportAsJson = useCallback(() => {
     const data = { notes, connections, layerState };
     const jsonString = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
-    // saveAs(blob, 'culture-map-data.json');
-    console.log('JSON data ready for download:', blob);
+    saveAs(blob, 'culture-map-data.json');
   }, [notes, connections, layerState]);
 
   // =================================================================================
@@ -581,6 +666,7 @@ function App() {
             handleMouseDownOnBoard={handleMouseDownOnBoard}
             handleMouseDownOnNote={handleMouseDownOnNote}
             handleMouseDownOnResizeHandle={handleMouseDownOnResizeHandle}
+            handleMouseDownOnLayerResizeHandle={handleMouseDownOnLayerResizeHandle}
             handleUpdateConnection={handleUpdateConnection}
             handleDeleteConnection={handleDeleteConnection}
             handleCloseContextMenu={handleCloseContextMenu}

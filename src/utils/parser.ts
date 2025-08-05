@@ -12,17 +12,24 @@ const layerNameToIndex: { [key: string]: number } = {
 
 // 인식 강도(PerceptionIntensity) 추출 함수
 const extractPerceptionIntensity = (type: string): PerceptionIntensity => {
-    if (type.includes('/집중')) return '집중';
-    if (type.includes('/관심')) return '관심';
-    // 태그 없는 경우 '언급'으로 처리
-    return '언급';
+    if (type.endsWith('_집중')) return '집중';
+    if (type.endsWith('_관심')) return '관심';
+    if (type.endsWith('_언급')) return '언급';
+    return '언급'; // 기본값
 };
 
 
 // 타입 정규화 함수 (인식강도 suffix 처리 포함)
 const normalizeType = (type: string): string => {
-    // 인식강도 suffix 제거 (신 형식: /집중, /관심, /언급)
-    const typeWithoutIntensity = type.split('/')[0];
+    let typeWithoutIntensity = type;
+    if (type.endsWith('_집중')) {
+        typeWithoutIntensity = type.slice(0, -3);
+    } else if (type.endsWith('_관심')) {
+        typeWithoutIntensity = type.slice(0, -3);
+    } else if (type.endsWith('_언급')) {
+        typeWithoutIntensity = type.slice(0, -3);
+    }
+    
     const trimmedType = typeWithoutIntensity.trim();
     
     if (trimmedType === '유형') return '유형_레버';
@@ -38,8 +45,8 @@ export const parseAIOutput = (text: string): { notes: NoteData[], connections: C
     const noteContentToIdMap = new Map<string, string>();
     const pendingConnections: string[] = [];
     
-    // 정규식 개선: content와 metadata를 명확히 분리
-    const nodeRegex = /^\[(?<type>[^\]]+)\]\s*\((?<sentiment>[^)]+)\)\s*(?<content>.*?)\s*(?:\((?<metadata>(?:근거|분류):.*)\))?$/i;
+    // 정규식 단순화: 타입에 모든 문자를 허용
+    const nodeRegex = /^\[(?<type>[^\]]+)\]\s*\((?<sentiment>[^)]+)\)\s*(?<content>.*?)\s*(?:\((?<metadata>(?:저자|이론|연도):.*?)\))?$/i;
 
     // 1차: 모든 노드를 생성 (위치 계산은 나중에)
     lines.forEach((line) => {
@@ -61,22 +68,21 @@ export const parseAIOutput = (text: string): { notes: NoteData[], connections: C
             const layerIndex = layerNameToIndex[normalizedType];
             const trimmedContent = content.trim();
 
-            // 메타데이터 파싱 (분류, 근거 추출)
-            let category: string | undefined = undefined;
-            let basis: string | undefined = undefined;
+            // 메타데이터 파싱 (저자, 이론, 연도 추출)
+            let basis: { author: string; theory: string; year: string; } | undefined = undefined;
 
             if (metadata) {
-                const metaParts = metadata.split(/,\s*(?=(?:분류|근거):)/g); // 각 키워드 앞에서만 분리
-                const metaMap = new Map<string, string>();
-                metaParts.forEach(part => {
-                    const [key, ...valueParts] = part.split(':');
-                    if (key && valueParts.length > 0) {
-                        metaMap.set(key.trim(), valueParts.join(':').trim());
-                    }
-                });
+                const authorMatch = metadata.match(/저자:\s*([^,]+)/);
+                const theoryMatch = metadata.match(/이론:\s*([^,]+)/);
+                const yearMatch = metadata.match(/연도:\s*([^,)]+)/);
 
-                category = metaMap.get('분류');
-                basis = metaMap.get('근거');
+                if (authorMatch && theoryMatch && yearMatch) {
+                    basis = {
+                        author: authorMatch[1].trim(),
+                        theory: theoryMatch[1].trim(),
+                        year: yearMatch[1].trim(),
+                    };
+                }
             }
 
             if (layerIndex === undefined || !trimmedContent) {
@@ -101,7 +107,6 @@ export const parseAIOutput = (text: string): { notes: NoteData[], connections: C
                 perceptionIntensity: perceptionIntensity, // 인식 강도 필드 추가
                 basis: basis, // 이론적 근거 필드 추가
                 layer: (layerIndex + 1) as 1 | 2 | 3 | 4,
-                category: category || undefined,
             };
 
             notes.push(newNote);

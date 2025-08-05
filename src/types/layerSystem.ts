@@ -21,7 +21,7 @@ export const LAYER_CONFIG = {
   '결과': {
     index: 0 as LayerIndex,
     color: '#FF6B6B', // 빨간색 계열
-    label: '결과 (Results)',
+    label: '결과 상태',
     description: '가시적 성과와 결과물',
     sortPriority: 0,
     zIndex: 1000
@@ -29,7 +29,7 @@ export const LAYER_CONFIG = {
   '행동': {
     index: 1 as LayerIndex,
     color: '#4ECDC4', // 청록색 계열
-    label: '행동 (Behaviors)',
+    label: '행동 패턴',
     description: '관찰 가능한 행동 패턴',
     sortPriority: 1,
     zIndex: 900
@@ -37,7 +37,7 @@ export const LAYER_CONFIG = {
   '유형_레버': {
     index: 2 as LayerIndex,
     color: '#45B7D1', // 파란색 계열
-    label: '유형 요인 (Tangible Factors)',
+    label: '유형 요인',
     description: '구조, 시스템, 프로세스',
     sortPriority: 2,
     zIndex: 800
@@ -45,7 +45,7 @@ export const LAYER_CONFIG = {
   '무형_레버': {
     index: 3 as LayerIndex,
     color: '#96CEB4', // 녹색 계열
-    label: '무형 요인 (Intangible Factors)',
+    label: '무형 요인',
     description: '가치관, 신념, 가정',
     sortPriority: 3,
     zIndex: 700
