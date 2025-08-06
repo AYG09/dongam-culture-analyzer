@@ -739,23 +739,56 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({ onGenerateMap, onClea
             </div>
 
             <div className="step-instructions">
-              <h4>진단 분석 방법</h4>
+              <h4>진단 분석 방법 (3단계 분할)</h4>
               <ol>
-                <li>아래 Step 4a 진단 프롬프트를 복사하세요</li>
-                <li>Claude에 프롬프트를 입력하세요</li>
-                <li>Step 3에서 생성된 Culture Map과 Gemini 분석 결과를 함께 제공하세요</li>
-                <li>3가지 핵심 질문에 대한 진단 결과를 받으세요</li>
+                <li>아래 3개의 프롬프트를 순서대로 복사하여 사용하세요</li>
+                <li>Claude에 각 프롬프트를 입력하고 Culture Map과 Gemini 분석 결과를 함께 제공하세요</li>
+                <li>Gemini의 토큰 제한 문제를 해결하기 위해 분할된 방식입니다</li>
               </ol>
             </div>
 
-            <button onClick={() => {
-              promptLoader.loadPrompt('step4a_claude_diagnosis').then(result => {
-                navigator.clipboard.writeText(result.content);
-                alert('Step 4a 조직문화 진단 프롬프트가 복사되었습니다.');
-              });
-            }} className="btn-primary">
-              Step 4a 진단 프롬프트 복사
-            </button>
+            <div className="button-group" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button onClick={() => {
+                promptLoader.loadPrompt('step4a1_culture_diagnosis').then(result => {
+                  navigator.clipboard.writeText(result.content);
+                  alert('Step 4a-1 (문화상태 정의 + 컬쳐맵 설명력) 프롬프트가 복사되었습니다.');
+                });
+              }} className="btn-primary">
+                📊 Step 4a-1: 문화상태 정의 + 컬쳐맵 설명력
+              </button>
+              
+              <button onClick={() => {
+                promptLoader.loadPrompt('step4a2_theory_analysis').then(result => {
+                  navigator.clipboard.writeText(result.content);
+                  alert('Step 4a-2 (이론 해설 - 전체 강제) 프롬프트가 복사되었습니다.');
+                });
+              }} className="btn-primary">
+                📚 Step 4a-2: 이론 해설 (전체 요소 강제)
+              </button>
+              
+              <button onClick={() => {
+                promptLoader.loadPrompt('step4a3_bias_analysis').then(result => {
+                  navigator.clipboard.writeText(result.content);
+                  alert('Step 4a-3 (인지편향 + 한국적 맥락) 프롬프트가 복사되었습니다.');
+                });
+              }} className="btn-primary">
+                🧠 Step 4a-3: 인지편향 + 한국적 맥락 분석
+              </button>
+            </div>
+
+            <div className="legacy-button" style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #e2e8f0' }}>
+              <p style={{ fontSize: '0.9em', color: '#64748b', marginBottom: '10px' }}>
+                ⚠️ 기존 통합 프롬프트 (권장하지 않음 - 이론 해설 제한 이슈)
+              </p>
+              <button onClick={() => {
+                promptLoader.loadPrompt('step4a_claude_diagnosis').then(result => {
+                  navigator.clipboard.writeText(result.content);
+                  alert('Step 4a 조직문화 진단 프롬프트가 복사되었습니다.');
+                });
+              }} className="btn-secondary">
+                Step 4a 통합 진단 프롬프트 (구버전)
+              </button>
+            </div>
           </Step>
 
           <Step

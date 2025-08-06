@@ -28,6 +28,9 @@ const STEP_FILE_MAP: Record<string, string | null> = {
   step2: 'step2.md',
   step3: 'step3.md',
   step4a_claude_diagnosis: 'step4a_claude_diagnosis.md',
+  step4a1_culture_diagnosis: 'step4a1_culture_diagnosis.md',
+  step4a2_theory_analysis: 'step4a2_theory_analysis.md',
+  step4a3_bias_analysis: 'step4a3_bias_analysis.md',
   step4b_claude_strategy: 'step4b_claude_strategy.md',
   // 교육용 워크샵 전용 프롬프트 파일
   stepworkshop: 'workshop.md',
@@ -368,6 +371,41 @@ Culture Map과 Gemini 분석을 바탕으로 조직문화 상태를 진단해주
 3. 인지편향 교차분석
 
 각 질문에 대해 구체적이고 실용적인 답변을 제공해주세요.`,
+
+      step4a1_culture_diagnosis: `# Step 4a-1: 조직문화 상태 정의 및 컬쳐맵 설명력 분석
+Culture Map과 Gemini 분석을 바탕으로 조직문화 상태를 정의하고 컬쳐맵의 설명력을 분석해주세요.
+
+## 2가지 핵심 질문
+1. 조직문화 상태 정의
+2. 컬쳐맵 설명력 분석
+
+각 질문에 대해 구체적이고 실용적인 답변을 제공해주세요.`,
+
+      step4a2_theory_analysis: `# Step 4a-2: 이론 해설 (전체 강제)
+Culture Map의 모든 유형/무형 요소에 기재된 이론을 빠짐없이 해설해주세요.
+
+## ⚠️ 중요: 완전성 보장
+- 3개 제한 없이 모든 요소를 다뤄야 함
+- 분량 제한으로 생략하지 말고 전체를 완료
+
+## 분석 구조 (각 이론마다 반복)
+- 이론 명: [이론의 이름] (저자, 연도)
+- 핵심 개념: [해당 이론을 1-2 문장으로 요약]
+- 선정 이유 및 적용 근거: [구체적 설명]`,
+
+      step4a3_bias_analysis: `# Step 4a-3: 인지편향 교차분석 및 한국적 문화 맥락
+구성원 인식 vs 객관적 현실을 교차분석하고 한국적 문화 맥락에서 해석해주세요.
+
+## 2가지 핵심 분석
+1. 인지편향 교차분석
+   - 과대평가 요소 (높은 인식 + 낮은 실제 영향)
+   - 과소평가 요소 (낮은 인식 + 높은 실제 영향)  
+   - 적정평가 요소 (인식과 실제 영향 일치)
+
+2. 한국적 문화 맥락 분석
+   - 홉스테더 문화차원 모델
+   - 국내 권위자 이론 (김인수, 조동성, 신유근)
+   - 디지털 환경/세대 특수성`,
 
       step4b_claude_strategy: `# Step 4b: 실행전략 수립
 Step 4a 진단 결과를 바탕으로 구체적인 실행전략을 수립해주세요.
