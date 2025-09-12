@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pip install:*)",
+      "Bash(python:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(npm install)",
+      "Bash(call run-dev.bat)",
+      "Read(D:\\yeonggyu-workspace/**)",
+      "Read(D:\\yeonggyu-workspace\\org_culture_analyzer\\src\\components/**)",
+      "Read(D:\\yeonggyu-workspace\\org_culture_analyzer\\src\\components/**)",
+      "Read(D:\\yeonggyu-workspace\\org_culture_analyzer\\src\\components/**)",
+      "Bash(run-dev.bat)",
+      "Bash(dir)",
+      "Bash(ipconfig)",
+      "Bash(claude update)",
+      "Bash(claude doctor)",
+      "Bash(start-app.bat)",
+      "Bash(dir backend)",
+      "Bash(npm run build:*)",
+      "Bash(if exist node_modules.vite rmdir /s /q node_modules.vite)",
+      "Bash(taskkill:*)",
+      "Bash(wmic process where:*)",
+      "Bash(if exist dist rmdir /s /q dist)",
+      "Bash(cmd /c:*)",
+      "Bash(dir /od)",
+      "Bash(dir /o:d)",
+      "Bash(netstat:*)",
+      "Bash(wmic:*)",
+      "Bash(dir:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(npm start)",
+      "Bash(npm run:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(move useAuth.js useAuth.jsx)",
+      "Bash(mv:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

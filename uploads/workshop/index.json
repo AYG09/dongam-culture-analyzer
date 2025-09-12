@@ -1,0 +1,31 @@
+{
+  "items": [
+    {
+      "id": "705d6da6fa",
+      "team": null,
+      "label": "제조라인 불량률 개선 활동",
+      "type": "prompt",
+      "filename": "1756638111_705d6da6fa.txt",
+      "size": 8544,
+      "createdAt": 1756638111
+    },
+    {
+      "id": "464ffe6f8f",
+      "team": null,
+      "label": "제조라인 불량률 개선 활동",
+      "type": "prompt",
+      "filename": "1756638277_464ffe6f8f.txt",
+      "size": 8544,
+      "createdAt": 1756638277
+    },
+    {
+      "id": "6cf4efcfa4",
+      "team": null,
+      "label": "R",
+      "type": "prompt",
+      "filename": "1756943342_6cf4efcfa4.txt",
+      "size": 9596,
+      "createdAt": 1756943342
+    }
+  ]
+}

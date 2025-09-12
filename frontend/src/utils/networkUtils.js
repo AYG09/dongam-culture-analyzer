@@ -16,8 +16,12 @@ export async function getNetworkInfo() {
   }
   
   try {
-    // 먼저 localhost로 시도
-    const response = await fetch('http://localhost:65432/api/network-info', {
+    // 환경에 따라 다른 URL 사용
+    const apiUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:65432/api/network-info'
+      : '/api/network-info';
+      
+    const response = await fetch(apiUrl, {
       timeout: 3000
     });
     
@@ -34,12 +38,17 @@ export async function getNetworkInfo() {
     console.warn('Failed to fetch network info from localhost:', error);
   }
   
-  // 실패 시 기본값 반환
-  const fallback = {
+  // 실패 시 기본값 반환 (환경에 따라)
+  const fallback = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? {
     hostname: 'localhost',
     local_ip: '127.0.0.1',
     network_ip: '127.0.0.1', 
     api_url: 'http://localhost:65432/api'
+  } : {
+    hostname: window.location.hostname,
+    local_ip: window.location.hostname,
+    network_ip: window.location.hostname, 
+    api_url: '/api'
   };
   
   cachedNetworkInfo = fallback;
