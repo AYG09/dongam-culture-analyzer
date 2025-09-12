@@ -25,10 +25,10 @@ export default async function handler(req, res) {
     console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'Set' : 'Not set')
     console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'Set' : 'Not set')
 
-    // 간단한 쿼리로 연결 테스트
+    // 간단한 쿼리로 연결 테스트 (PostgREST 호환 문법)
     const { data, error } = await supabase
       .from('sessions')
-      .select('count(*)')
+      .select('code')
       .limit(1)
 
     if (error) {
