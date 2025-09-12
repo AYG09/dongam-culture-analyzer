@@ -1,0 +1,383 @@
+.session-manager-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.session-manager {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.session-manager h2 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+  text-align: center;
+}
+
+.session-manager > p {
+  margin: 0 0 1.5rem 0;
+  color: #666;
+  text-align: center;
+}
+
+.session-tabs {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.session-tabs button {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.session-tabs button:hover {
+  background-color: #f8f9fa;
+}
+
+.session-tabs button.active {
+  color: #3498db;
+  border-bottom-color: #3498db;
+}
+
+.session-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.form-group input:disabled,
+.form-group textarea:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.primary-btn {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+.primary-btn:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background: #fee;
+  color: #c0392b;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #fadbd8;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-sessions {
+  text-align: center;
+  color: #666;
+  padding: 2rem;
+  font-style: italic;
+}
+
+.session-card {
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: box-shadow 0.2s;
+}
+
+.session-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.session-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.session-code {
+  background: #3498db;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.session-description {
+  color: #666;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.session-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.session-card .primary-btn {
+  width: 100%;
+}
+
+.create-info {
+  text-align: center;
+  color: #666;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.create-session-btn {
+  width: 100%;
+  font-size: 1.1rem;
+  padding: 1rem 1.5rem;
+}
+
+/* 세션 생성 완료 UI */
+.created-session-info {
+  background: #f8f9fa;
+  border: 2px solid #28a745;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.created-session-info h3 {
+  color: #28a745;
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+}
+
+.session-details {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.session-details p {
+  margin: 0.5rem 0;
+  color: #333;
+}
+
+.session-details .session-code {
+  font-family: 'Courier New', monospace;
+  background: #e9ecef;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  color: #495057;
+}
+
+.access-methods {
+  display: flex;
+  gap: 2rem;
+  margin: 1.5rem 0;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.qr-section, .url-section {
+  flex: 1;
+  min-width: 200px;
+}
+
+.qr-section h4, .url-section h4 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1rem;
+}
+
+.qr-code-container {
+  text-align: center;
+}
+
+.qr-code {
+  width: 160px;
+  height: 160px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  background: white;
+}
+
+.qr-instruction {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin: 0.5rem 0 0 0;
+}
+
+.url-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.url-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: #f8f9fa;
+  color: #495057;
+  font-family: 'Courier New', monospace;
+}
+
+.copy-btn {
+  padding: 0.75rem 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+}
+
+.copy-btn:hover {
+  background: #0056b3;
+}
+
+.session-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.secondary-btn {
+  background: #6c757d;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.secondary-btn:hover {
+  background: #5a6268;
+}
+
+.admin-section {
+  text-align: center;
+  margin: 15px 0;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.admin-login-btn, .admin-panel-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  background-color: #6c757d;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.admin-login-btn:hover, .admin-panel-btn:hover {
+  background-color: #5a6268;
+}
+
+@media (max-width: 600px) {
+  .access-methods {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .session-actions {
+    flex-direction: column;
+  }
+  
+  .url-container {
+    flex-direction: column;
+  }
+  
+  .copy-btn {
+    width: 100%;
+  }
+}

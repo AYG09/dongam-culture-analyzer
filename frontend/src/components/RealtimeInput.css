@@ -1,0 +1,219 @@
+.realtime-input {
+  transition: all 0.3s ease;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  background: white;
+}
+
+.realtime-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* 내가 잠근 필드 - 초록색 테두리 */
+.realtime-input.locked-by-me {
+  border-color: #28a745;
+  background: #f8fff9;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+}
+
+.realtime-input.locked-by-me:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+}
+
+/* 다른 사용자가 잠근 필드 - 빨간색 테두리 + 점멸 */
+.realtime-input.locked-by-other {
+  border-color: #dc3545;
+  background: #fff5f5;
+  color: #666;
+  cursor: not-allowed;
+  animation: lockedPulse 2s infinite;
+}
+
+.realtime-input.locked-by-other:disabled {
+  opacity: 0.7;
+}
+
+/* 점멸 애니메이션 */
+@keyframes lockedPulse {
+  0% {
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.3);
+  }
+}
+
+/* 텍스트 영역 스타일 */
+textarea.realtime-input {
+  min-height: 100px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+/* 잠금 상태 인디케이터 */
+.field-lock-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.field-lock-indicator.available {
+  background-color: #28a745;
+}
+
+.field-lock-indicator.locked-by-me {
+  background-color: #ffc107;
+  animation: pulse 1.5s infinite;
+}
+
+.field-lock-indicator.locked-by-other {
+  background-color: #dc3545;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 저장 버튼 기반 입력 컴포넌트 스타일 */
+.realtime-input-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.input-wrapper .realtime-input {
+  width: 100%;
+}
+
+.input-wrapper .realtime-input:disabled:not(.locked-by-other) {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  color: #6c757d;
+  cursor: default;
+}
+
+.lock-indicator {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.edit-button,
+.save-button,
+.cancel-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 60px;
+  white-space: nowrap;
+}
+
+.edit-button {
+  background-color: #007bff;
+  color: white;
+}
+
+.edit-button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.edit-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.save-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.save-button:hover:not(:disabled) {
+  background-color: #1e7e34;
+}
+
+.save-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cancel-button {
+  background-color: #6c757d;
+  color: white;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background-color: #545b62;
+}
+
+.cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .realtime-input-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .button-group {
+    justify-content: flex-end;
+  }
+  
+  .edit-button,
+  .save-button,
+  .cancel-button {
+    flex: 0 0 auto;
+  }
+}
