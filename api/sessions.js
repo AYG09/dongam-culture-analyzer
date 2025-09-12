@@ -37,28 +37,45 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('Sessions API Error:', error)
-    res.status(500).json({ error: error.message })
+    res.status(500).json({ error: error.message || 'Unknown error' })
   }
 }
 
 async function createSession(req, res) {
+  console.log('Creating session with data:', req.body)
+  
   const { name, description } = req.body
+  
+  if (!name) {
+    console.log('Error: Session name is required')
+    return res.status(400).json({ error: 'Session name is required' })
+  }
+  
   const code = generateSessionCode()
+  console.log('Generated session code:', code)
+
+  const sessionData = {
+    code,
+    name,
+    description: description || null,
+    participant_count: 0,
+    created_at: new Date().toISOString(),
+    last_access: new Date().toISOString()
+  }
+  
+  console.log('Inserting session data:', sessionData)
 
   const { data, error } = await supabase
     .from('sessions')
-    .insert([{
-      code,
-      name,
-      description,
-      participant_count: 0,
-      created_at: new Date().toISOString(),
-      last_access: new Date().toISOString()
-    }])
+    .insert([sessionData])
     .select()
 
-  if (error) throw error
-
+  if (error) {
+    console.error('Supabase insert error:', error)
+    throw error
+  }
+  
+  console.log('Session created successfully:', data[0])
   res.status(201).json(data[0])
 }
 
