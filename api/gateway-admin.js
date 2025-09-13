@@ -101,15 +101,15 @@ export default async function handler(req, res) {
         const { password, sessionId } = req.query
 
         if (sessionId) {
-          // 세션 삭제
+          // 세션 삭제 (실제로는 access log 레코드 삭제)
           if (!sessionId) {
             return res.status(400).json({ error: '세션 ID가 필요합니다.' })
           }
 
           const { error } = await supabase
-            .from('gateway_sessions')
+            .from('gateway_access_logs')
             .delete()
-            .eq('session_id', sessionId)
+            .eq('session_token', sessionId)
 
           if (error) {
             console.error('Session delete error:', error)
@@ -177,13 +177,14 @@ async function handleGetSessions(req, res, { search, page, limit }) {
 
   try {
     let query = supabase
-      .from('gateway_sessions')
+      .from('gateway_access_logs')
       .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false });
+      .eq('success', true)
+      .order('timestamp', { ascending: false });
 
-    // 검색 기능 - 세션 ID, IP 주소, User Agent에서 검색
+    // 검색 기능 - IP 주소, User Agent에서 검색
     if (search && search.trim()) {
-      query = query.or(`session_id.ilike.%${search}%,ip_address.ilike.%${search}%,user_agent.ilike.%${search}%`);
+      query = query.or(`ip_address.ilike.%${search}%,user_agent.ilike.%${search}%,session_token.ilike.%${search}%`);
     }
 
     const { data: sessions, error, count } = await query

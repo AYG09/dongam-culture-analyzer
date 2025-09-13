@@ -583,14 +583,14 @@ const AdminGateway = () => {
             ) : (
               <div className="sessions-list">
                 {sessions.map((session) => (
-                  <div key={session.session_id} className="session-item">
+                  <div key={session.session_token || session.id} className="session-item">
                     <div className="session-header">
                       <div className="session-main">
-                        <code className="session-id">{session.session_id}</code>
+                        <code className="session-id">{session.session_token || 'N/A'}</code>
                         <span className="session-ip">{session.ip_address}</span>
                       </div>
                       <button
-                        onClick={() => handleDeleteSession(session.session_id)}
+                        onClick={() => handleDeleteSession(session.session_token || session.id)}
                         className="delete-btn"
                         title="세션 삭제"
                       >
@@ -600,8 +600,9 @@ const AdminGateway = () => {
                     
                     <div className="session-details">
                       <div className="meta-info">
-                        <span>생성: {new Date(session.created_at).toLocaleString()}</span>
-                        <span>최근 활동: {session.last_activity ? new Date(session.last_activity).toLocaleString() : '없음'}</span>
+                        <span>로그인: {new Date(session.timestamp).toLocaleString()}</span>
+                        <span>사용자: {session.password_used}</span>
+                        <span>성공: {session.success ? '✅' : '❌'}</span>
                       </div>
                       {session.user_agent && (
                         <p className="user-agent">{session.user_agent}</p>
