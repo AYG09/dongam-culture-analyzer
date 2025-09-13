@@ -10,8 +10,9 @@ export default defineConfig({
     port: 3333,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:65432',
+        target: 'https://dongam-culture-analyzer.vercel.app',
         changeOrigin: true,
+        secure: true,
       },
     },
   },

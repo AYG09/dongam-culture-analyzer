@@ -96,11 +96,22 @@ const copyToClipboard = async (text) => {
 import './Gateway.css';
 
 const AdminGateway = () => {
+  // 탭 상태
+  const [activeTab, setActiveTab] = useState('passwords');
+  
+  // 비밀번호 관리 상태
   const [passwords, setPasswords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [creating, setCreating] = useState(false);
+  
+  // 세션 관리 상태
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionSearch, setSessionSearch] = useState('');
+  const [sessionPage, setSessionPage] = useState(1);
+  const [sessionTotal, setSessionTotal] = useState(0);
   
   // 새 비밀번호 폼 상태
   const [newPassword, setNewPassword] = useState({
@@ -225,6 +236,75 @@ const AdminGateway = () => {
     }
   };
 
+  // 세션 목록 로드
+  const loadSessions = async (search = '', page = 1) => {
+    setSessionsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        type: 'sessions',
+        page: page.toString(),
+        limit: '20'
+      });
+      
+      if (search.trim()) {
+        params.append('search', search.trim());
+      }
+
+      const result = await gatewayFetch(`/gateway-admin?${params}`, {
+        method: 'GET'
+      });
+
+      if (result.success) {
+        setSessions(result.data.sessions || []);
+        setSessionTotal(result.data.total || 0);
+        setSessionPage(page);
+        setError('');
+      } else {
+        setError(result.error || '세션 목록을 불러올 수 없습니다.');
+      }
+    } catch (error) {
+      setError(getErrorMessage(error));
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
+  // 세션 삭제
+  const handleDeleteSession = async (sessionId) => {
+    if (!confirm(`세션 "${sessionId}"을 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const result = await gatewayFetch(`/gateway-admin?sessionId=${encodeURIComponent(sessionId)}`, {
+        method: 'DELETE'
+      });
+
+      if (result.success) {
+        await loadSessions(sessionSearch, sessionPage); // 목록 새로고침
+        alert(result.data.message || '세션이 삭제되었습니다.');
+      } else {
+        setError(result.error || '세션 삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      setError(getErrorMessage(error));
+    }
+  };
+
+  // 세션 검색
+  const handleSessionSearch = () => {
+    setSessionPage(1);
+    loadSessions(sessionSearch, 1);
+  };
+
+  // 탭 변경 시 데이터 로드
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'sessions' && sessions.length === 0) {
+      loadSessions();
+    }
+  };
+
   // 권한 없음
   if (!isAdmin()) {
     return (
@@ -241,7 +321,23 @@ const AdminGateway = () => {
     <div className="admin-gateway-container">
       <div className="admin-header">
         <h2>Gateway 관리자 패널</h2>
-        <p>임시 비밀번호를 생성하고 관리할 수 있습니다.</p>
+        <p>임시 비밀번호와 세션을 관리할 수 있습니다.</p>
+      </div>
+
+      {/* 탭 네비게이션 */}
+      <div className="admin-tabs">
+        <button 
+          className={`tab-button ${activeTab === 'passwords' ? 'active' : ''}`}
+          onClick={() => handleTabChange('passwords')}
+        >
+          임시 비밀번호 관리
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'sessions' ? 'active' : ''}`}
+          onClick={() => handleTabChange('sessions')}
+        >
+          세션 관리
+        </button>
       </div>
 
       {error && (
@@ -251,22 +347,25 @@ const AdminGateway = () => {
         </div>
       )}
 
-      {/* 새 비밀번호 생성 버튼 */}
-      <div className="admin-actions">
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="create-password-btn"
-        >
-          {showCreateForm ? '취소' : '새 비밀번호 생성'}
-        </button>
-        <button
-          onClick={loadPasswords}
-          className="refresh-btn"
-          disabled={loading}
-        >
-          {loading ? '새로고침 중...' : '새로고침'}
-        </button>
-      </div>
+      {/* 비밀번호 관리 탭 */}
+      {activeTab === 'passwords' && (
+        <div className="tab-content">
+          {/* 새 비밀번호 생성 버튼 */}
+          <div className="admin-actions">
+            <button
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className="create-password-btn"
+            >
+              {showCreateForm ? '취소' : '새 비밀번호 생성'}
+            </button>
+            <button
+              onClick={loadPasswords}
+              className="refresh-btn"
+              disabled={loading}
+            >
+              {loading ? '새로고침 중...' : '새로고침'}
+            </button>
+          </div>
 
       {/* 비밀번호 생성 폼 */}
       {showCreateForm && (
@@ -380,16 +479,43 @@ const AdminGateway = () => {
           <div className="no-passwords">등록된 임시 비밀번호가 없습니다.</div>
         ) : (
           <div className="passwords-list">
-            {passwords.map((pwd) => (
-              <div key={pwd.id} className={`password-item ${pwd.status}`}>
+            {passwords.map((pwd) => {
+              // 비밀번호 상태 계산
+              const now = new Date();
+              const expiresAt = new Date(pwd.expires_at);
+              const isExpired = now > expiresAt;
+              const isExhausted = pwd.max_uses && pwd.used_count >= pwd.max_uses;
+              
+              let status, statusText;
+              if (isExpired) {
+                status = 'expired';
+                statusText = '만료';
+              } else if (isExhausted) {
+                status = 'exhausted';
+                statusText = '소진';
+              } else {
+                status = 'active';
+                statusText = '활성';
+              }
+              
+              // 남은 시간 계산
+              const timeRemaining = isExpired ? '만료됨' : 
+                Math.ceil((expiresAt - now) / (1000 * 60 * 60)) + '시간 남음';
+              
+              // 사용 정보
+              const usageInfo = pwd.max_uses ? 
+                `${pwd.used_count}/${pwd.max_uses}회` : 
+                `${pwd.used_count}회 (무제한)`;
+              
+              return (
+              <div key={pwd.id} className={`password-item ${status}`}>
                 <div className="password-header">
                   <div className="password-main">
                     <code className="password-text" onClick={() => handleCopyPassword(pwd.password)}>
                       {pwd.password}
                     </code>
-                    <span className={`status-badge ${pwd.status}`}>
-                      {pwd.status === 'active' ? '활성' : 
-                       pwd.status === 'expired' ? '만료' : '소진'}
+                    <span className={`status-badge ${status}`}>
+                      {statusText}
                     </span>
                   </div>
                   <button
@@ -407,15 +533,106 @@ const AdminGateway = () => {
                   )}
                   <div className="meta-info">
                     <span>생성: {new Date(pwd.created_at).toLocaleString()}</span>
-                    <span>만료: {pwd.timeRemaining}</span>
-                    <span>사용: {pwd.usageInfo}</span>
+                    <span>만료: {timeRemaining}</span>
+                    <span>사용: {usageInfo}</span>
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+        </div>
+      )}
+
+      {/* 세션 관리 탭 */}
+      {activeTab === 'sessions' && (
+        <div className="tab-content">
+          {/* 세션 검색 */}
+          <div className="session-controls">
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="세션 ID, IP 주소, User Agent로 검색..."
+                value={sessionSearch}
+                onChange={(e) => setSessionSearch(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSessionSearch()}
+              />
+              <button onClick={handleSessionSearch} className="search-btn">
+                검색
+              </button>
+            </div>
+            <button
+              onClick={() => loadSessions(sessionSearch, sessionPage)}
+              className="refresh-btn"
+              disabled={sessionsLoading}
+            >
+              {sessionsLoading ? '새로고침 중...' : '새로고침'}
+            </button>
+          </div>
+
+          {/* 세션 목록 */}
+          <div className="sessions-container">
+            <h3>활성 세션 목록 ({sessionTotal}개)</h3>
+            
+            {sessionsLoading ? (
+              <div className="loading">세션 목록을 불러오는 중...</div>
+            ) : sessions.length === 0 ? (
+              <div className="no-sessions">활성 세션이 없습니다.</div>
+            ) : (
+              <div className="sessions-list">
+                {sessions.map((session) => (
+                  <div key={session.session_id} className="session-item">
+                    <div className="session-header">
+                      <div className="session-main">
+                        <code className="session-id">{session.session_id}</code>
+                        <span className="session-ip">{session.ip_address}</span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteSession(session.session_id)}
+                        className="delete-btn"
+                        title="세션 삭제"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                    
+                    <div className="session-details">
+                      <div className="meta-info">
+                        <span>생성: {new Date(session.created_at).toLocaleString()}</span>
+                        <span>최근 활동: {session.last_activity ? new Date(session.last_activity).toLocaleString() : '없음'}</span>
+                      </div>
+                      {session.user_agent && (
+                        <p className="user-agent">{session.user_agent}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 페이지네이션 */}
+            {sessionTotal > 20 && (
+              <div className="pagination">
+                <button
+                  onClick={() => loadSessions(sessionSearch, sessionPage - 1)}
+                  disabled={sessionPage <= 1 || sessionsLoading}
+                >
+                  이전
+                </button>
+                <span>페이지 {sessionPage}</span>
+                <button
+                  onClick={() => loadSessions(sessionSearch, sessionPage + 1)}
+                  disabled={sessionPage * 20 >= sessionTotal || sessionsLoading}
+                >
+                  다음
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
