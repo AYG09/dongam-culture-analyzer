@@ -130,7 +130,7 @@ const AdminGateway = () => {
       return;
     }
     loadPasswords();
-    loadSessions(); // 세션도 초기 로드!
+    // 세션은 탭 변경 시에만 로드 (관리자 인증 후에)
   }, []);
 
   // 임시 비밀번호 목록 로드
