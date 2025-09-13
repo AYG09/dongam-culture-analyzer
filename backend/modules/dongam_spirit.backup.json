@@ -1,0 +1,229 @@
+{
+  "spirits": [
+    {
+      "id": "spirit_01",
+      "name": "불우재(不尤哉) 정신",
+      "description": "온갖 난관에도 좌절하지 않으며 하늘을 원망하지 않고 남이나 주변을 절대 탓하지 않는다.",
+      "levers": [
+        { "lever_name": "안정성", "type": "핵심요소", "position": { "x": 120, "y": 340 } },
+        { "lever_name": "협력", "type": "핵심요소", "position": { "x": 620, "y": 280 } },
+        { "lever_name": "소통", "type": "핵심요소", "position": { "x": 520, "y": 640 } },
+        { "lever_name": "신뢰", "type": "보조요소", "position": { "x": 300, "y": 450 } },
+        { "lever_name": "내면성찰", "type": "보조요소", "position": { "x": 750, "y": 500 } },
+        { "lever_name": "자아수용", "type": "보조요소", "position": { "x": 180, "y": 580 } }
+      ],
+      "image": "/culture_maps/불우재정신.png"
+    },
+    {
+      "id": "spirit_02",
+      "name": "숭조위선 효우정신",
+      "description": "조상을 높여 소중히 여기고 부모에게 효도하며 형제 간에 우애한다.",
+      "behaviors": [
+        {
+          "id": "행동1",
+          "name": "조상 → 과거, 형제 → 현재, 우애 → 미래",
+          "connected_elements": ["유형1", "유형2", "유형7"]
+        },
+        {
+          "id": "행동2", 
+          "name": "조직의 소통문화 정책을 지킨다",
+          "connected_elements": ["유형8", "유형13", "유형9", "유형3"]
+        },
+        {
+          "id": "행동3",
+          "name": "노·사 상생활동을 활성화 한다", 
+          "connected_elements": ["유형4", "유형10"]
+        },
+        {
+          "id": "행동4",
+          "name": "쾌적한 근무환경을 조성하려 노력한다 (인본주의)",
+          "connected_elements": ["유형5"]
+        },
+        {
+          "id": "행동5",
+          "name": "동암정신을 전파한다",
+          "connected_elements": ["유형6"]
+        }
+      ],
+      "tangible_elements": [
+        {
+          "id": "유형1",
+          "name": "[자원배분 방식] 신규사업 사업지원 (티탄/Enc)",
+          "connected_elements": ["무형1"]
+        },
+        {
+          "id": "유형2", 
+          "name": "[팀 규정/철학] 이기주의 타파 / 무사안일주의 배제 / 최선을 다하는 자세",
+          "connected_elements": ["유형12"]
+        },
+        {
+          "id": "유형3",
+          "name": "[행사/이벤트] 팀원 생일 챙기기 (케잌 or 점심식사)",
+          "connected_elements": ["무형4", "무형5"]
+        },
+        {
+          "id": "유형4",
+          "name": "[제도 개선] 관리직 해외 연수 시행 요청 (현재 근로직 시행중)"
+        },
+        {
+          "id": "유형5",
+          "name": "[리더-업무절차/방식] 안전관리 강화 순회 활동",
+          "connected_elements": ["무형7"]
+        },
+        {
+          "id": "유형6",
+          "name": "[소통절차/방식] 주 2회 동암정신 공유 (모여서 낭독)"
+        },
+        {
+          "id": "유형7",
+          "name": "[행사/이벤트] 지역사회와의 적극적 소통"
+        },
+        {
+          "id": "유형8",
+          "name": "[정책 1] 나와 다른 의견을 제시하더라도 끝까지 경청하고 틀렸다고 하지 않기"
+        },
+        {
+          "id": "유형9",
+          "name": "[정책 3] 모임이나 회식을 통한 우애 다지기 '피를 나눈 형제보다 이웃사촌이 좋다.'",
+          "connected_elements": ["무형3"]
+        },
+        {
+          "id": "유형10",
+          "name": "[팀 규정/철학] 노사관계 개선을 위해 서로 가족이란 생각으로 언행 조심하기",
+          "connected_elements": ["유형14", "무형6"]
+        },
+        {
+          "id": "유형11",
+          "name": "[업무절차/방식] 통기 개선 협의",
+          "connected_elements": ["유형15", "무형8"]
+        },
+        {
+          "id": "유형12",
+          "name": "[행사/이벤트] 도덕정사 지장제 참석 (매월 음력 18일)"
+        },
+        {
+          "id": "유형13",
+          "name": "[정책 2] 하루 한 번 수고했다 격려하기",
+          "connected_elements": ["무형2"]
+        },
+        {
+          "id": "유형14",
+          "name": "[행사/이벤트] 노사 화합을 위한 가족동반행사 연 1회 이상 실시"
+        },
+        {
+          "id": "유형15",
+          "name": "[소통절차/방식] 메신저 활용, 교대자간 소통 강화 - 사고사례 공유하기"
+        }
+      ],
+      "intangible_elements": [
+        {
+          "id": "무형1",
+          "name": "우리는 반드시 달성할 수 있다는 믿음"
+        },
+        {
+          "id": "무형2", 
+          "name": "팀원들이 9~18시 동안 주어진 업무를 잘 수행했다는 믿음"
+        },
+        {
+          "id": "무형3",
+          "name": "우애를 다지는 것이 편하고, 업무향상에도 도움이 된다는 믿음"
+        },
+        {
+          "id": "무형4",
+          "name": "또 하나의 가족이란 믿음"
+        },
+        {
+          "id": "무형5",
+          "name": "우리 모두는 사람을 먼저, 배려를 먼저 생각한다고 믿는다"
+        },
+        {
+          "id": "무형6",
+          "name": "노사는 한 배를 탄 항해사라는 믿음"
+        },
+        {
+          "id": "무형7",
+          "name": "우리 모두는 안전수칙 준수에 앞장서고 있음을 믿는다"
+        },
+        {
+          "id": "무형8",
+          "name": "모두가 문제해결의 주체임을 믿는다"
+        }
+      ],
+      "levers": [
+        { "lever_name": "존중", "type": "핵심요소", "position": { "x": 320, "y": 460 } },
+        { "lever_name": "협력", "type": "핵심요소", "position": { "x": 660, "y": 520 } },
+        { "lever_name": "효도", "type": "보조요소", "position": { "x": 180, "y": 200 } },
+        { "lever_name": "우애", "type": "보조요소", "position": { "x": 540, "y": 300 } },
+        { "lever_name": "전통계승", "type": "보조요소", "position": { "x": 450, "y": 650 } }
+      ],
+      "image": "/culture_maps/숭조위선효우정신.png"
+    },
+    {
+      "id": "spirit_03",
+      "name": "불굴의 도전정신과 개척정신",
+      "description": "고난과 시련 속에서도 좌절하지 않고 도전하며 새로운 길을 개척한다.",
+      "levers": [
+        { "lever_name": "도전", "type": "핵심요소", "position": { "x": 780, "y": 220 } },
+        { "lever_name": "학습", "type": "핵심요소", "position": { "x": 420, "y": 180 } },
+        { "lever_name": "개척정신", "type": "보조요소", "position": { "x": 600, "y": 400 } },
+        { "lever_name": "인내", "type": "보조요소", "position": { "x": 200, "y": 480 } },
+        { "lever_name": "혁신", "type": "보조요소", "position": { "x": 700, "y": 600 } },
+        { "lever_name": "용기", "type": "보조요소", "position": { "x": 350, "y": 650 } }
+      ],
+      "image": "/culture_maps/불굴의도전정신과개척정신.png"
+    },
+    {
+      "id": "spirit_04",
+      "name": "미래를 예측하는 통찰력",
+      "description": "시대의 흐름을 읽고 미래를 내다보는 혜안을 통해 더 나은 방향을 설정하고 준비한다.",
+      "levers": [
+        { "lever_name": "통찰", "type": "핵심요소", "position": { "x": 300, "y": 200 } },
+        { "lever_name": "데이터", "type": "핵심요소", "position": { "x": 540, "y": 200 } },
+        { "lever_name": "미래예측", "type": "보조요소", "position": { "x": 680, "y": 350 } },
+        { "lever_name": "전략적사고", "type": "보조요소", "position": { "x": 160, "y": 420 } },
+        { "lever_name": "트렌드분석", "type": "보조요소", "position": { "x": 450, "y": 500 } }
+      ],
+      "image": "/culture_maps/미래를 예측하는 통찰.png"
+    },
+    {
+      "id": "spirit_05",
+      "name": "미풍양속의 계승",
+      "description": "아름답고 좋은 풍속을 지키며 후대에도 이어 나간다.",
+      "levers": [
+        { "lever_name": "전통", "type": "핵심요소", "position": { "x": 260, "y": 620 } },
+        { "lever_name": "윤리", "type": "핵심요소", "position": { "x": 680, "y": 700 } },
+        { "lever_name": "문화계승", "type": "보조요소", "position": { "x": 420, "y": 250 } },
+        { "lever_name": "도덕성", "type": "보조요소", "position": { "x": 580, "y": 450 } },
+        { "lever_name": "품격", "type": "보조요소", "position": { "x": 150, "y": 350 } }
+      ],
+      "image": "/culture_maps/미풍양속의 계승.png"
+    },
+    {
+      "id": "spirit_06",
+      "name": "상생적 공존공영의 인화정신",
+      "description": "더불어 함께 잘 살아가기 위해 여러 사람이 서로 협력하고 화합한다.",
+      "levers": [
+        { "lever_name": "상생", "type": "핵심요소", "position": { "x": 500, "y": 480 } },
+        { "lever_name": "협업", "type": "핵심요소", "position": { "x": 740, "y": 560 } },
+        { "lever_name": "공존", "type": "보조요소", "position": { "x": 280, "y": 300 } },
+        { "lever_name": "공영", "type": "보조요소", "position": { "x": 620, "y": 250 } },
+        { "lever_name": "인화", "type": "보조요소", "position": { "x": 350, "y": 650 } },
+        { "lever_name": "화합", "type": "보조요소", "position": { "x": 650, "y": 700 } }
+      ],
+      "image": "/culture_maps/상생적 공존공영의 인화정신.png"
+    },
+    {
+      "id": "spirit_07",
+      "name": "환경을 중시하는 사회적 책임경영",
+      "description": "환경을 중요하게 생각하는 경영을 통하여 사회적 가치 창출을 추구하는 책임경영을 한다.",
+      "levers": [
+        { "lever_name": "책임", "type": "핵심요소", "position": { "x": 200, "y": 300 } },
+        { "lever_name": "환경", "type": "핵심요소", "position": { "x": 620, "y": 380 } },
+        { "lever_name": "지속가능성", "type": "보조요소", "position": { "x": 400, "y": 200 } },
+        { "lever_name": "사회공헌", "type": "보조요소", "position": { "x": 720, "y": 550 } },
+        { "lever_name": "나눔", "type": "보조요소", "position": { "x": 150, "y": 600 } }
+      ],
+      "image": "/culture_maps/환경을 중시하는 사회적 책임경영.png"
+    }
+  ]
+}

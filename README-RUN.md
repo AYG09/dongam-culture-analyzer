@@ -29,3 +29,21 @@
   - GET /api/artifacts/{id} → { id, content, ... }
   - DELETE /api/artifacts/{id} → { ok: true }
 - 프런트 UI에도 ‘저장’ 버튼 추가됨(프롬프트/결과)
+
+엑셀 → JSON 반영(연결요소 자동화)
+엑셀 → JSON 반영(연결요소 자동화)
+
+- 엑셀 위치: public/동암정신/동암정신 7개요소.xlsx
+- Dry-run(출력만):
+  - PowerShell
+    - python -m backend.modules.tools.xlsx_to_spirits --xlsx "public/동암정신/동암정신 7개요소.xlsx" --json backend/modules/dongam_spirit.json
+- 적용 전 백업(권장):
+  - Copy-Item backend/modules/dongam_spirit.json backend/modules/dongam_spirit.backup.json -Force
+- 실제 반영:
+  - python -m backend.modules.tools.xlsx_to_spirits --xlsx "public/동암정신/동암정신 7개요소.xlsx" --json backend/modules/dongam_spirit.json --write
+
+주의사항
+
+- 엑셀의 A열은 ‘유형n/무형n/행동n(또는 결과)’ 구분, B열은 내용, C열 이후는 ‘연결요소’ 또는 ‘행동#’ 헤더를 권장합니다.
+- 연결요소 표기는 ‘유형1, 무형3’처럼 자유롭게 적어도 자동으로 ‘유형_1/무형_3’으로 정규화됩니다.
+- 병합은 해당 정신의 behaviors/tangible/intangible 배열을 덮어쓰므로, 수동 수정분이 있다면 백업 후 실행하세요.

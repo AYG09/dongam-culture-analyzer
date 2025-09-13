@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import './CultureMapCardView.css';
 
 const CultureMapCardView = ({ analysisData, sessionCode, selectedSpirit }) => {
@@ -135,8 +135,8 @@ const CultureMapCardView = ({ analysisData, sessionCode, selectedSpirit }) => {
     return element?.activity_source || 'none';
   };
 
-  // 동암정신 JSON 데이터 구조
-  const cultureMapData = [
+  // 동암정신 JSON 데이터 구조 (폴백)
+  const fallbackCultureMapData = [
     {
       "id": "결과_1",
       "text": "불우재 정신",
@@ -346,6 +346,48 @@ const CultureMapCardView = ({ analysisData, sessionCode, selectedSpirit }) => {
       "connections": []
     }
   ];
+
+  // selectedSpirit의 요소로 동적 카드 데이터 구성 (가능하면), 없으면 폴백 사용
+  const cultureMapData = useMemo(() => {
+    const tang = selectedSpirit?.tangible_elements || [];
+    const intang = selectedSpirit?.intangible_elements || [];
+    const hasDynamic = (Array.isArray(tang) && tang.length > 0) || (Array.isArray(intang) && intang.length > 0);
+    if (!hasDynamic) return fallbackCultureMapData;
+
+    const cards = [];
+    // 무형 요소 → Layer 4
+    intang.forEach((el) => {
+      const id = normalizeElementId(el.id);
+      cards.push({
+        id,
+        text: el.name,
+        position: { x: 0, y: 0 },
+        width: 150,
+        height: 140,
+        type: '무형',
+        layer: 4,
+        connections: [],
+      });
+    });
+
+    // 유형 요소 → Layer 3 (연결은 있는 경우만 반영)
+    tang.forEach((el) => {
+      const id = normalizeElementId(el.id);
+      const conns = Array.isArray(el.connected_elements) ? el.connected_elements.map(normalizeElementId) : [];
+      cards.push({
+        id,
+        text: el.name,
+        position: { x: 0, y: 0 },
+        width: 180,
+        height: 90,
+        type: '유형',
+        layer: 3,
+        connections: conns,
+      });
+    });
+
+    return cards;
+  }, [selectedSpirit]);
 
   // 레이어별 색상 정의
   const layerColors = {
@@ -780,6 +822,54 @@ const CultureMapCardView = ({ analysisData, sessionCode, selectedSpirit }) => {
         }}>
           {selectedSpirit?.name || '불우재 정신'}의 문화 분석 구조를 카드 형태로 시각화합니다.
         </p>
+        {/* 참고 문서(PDF) 링크: PNG 대신 PDF 문서를 참조합니다. */}
+        {(() => {
+          const name = selectedSpirit?.name || '';
+          const pdfCandidates = [
+            { re: /(숭조위선|효우)/, path: '/동암정신/숭조위선 효우정신.pdf', label: '숭조위선 효우정신 PDF' },
+            { re: /(불굴|개척)/, path: '/동암정신/불굴의 도전정신과 개척정신.pdf', label: '불굴의 도전·개척정신 PDF' },
+          ];
+          const matched = pdfCandidates.find(x => x.re.test(name));
+          const generalPdf = '/동암정신/동암정신 7개요소.pdf';
+          return (
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '6px 0 10px 0' }}>
+              {matched && (
+                <a
+                  href={matched.path}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    textDecoration: 'none',
+                    background: '#343a40',
+                    color: 'white',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  📄 {matched.label}
+                </a>
+              )}
+              <a
+                href={generalPdf}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  textDecoration: 'none',
+                  background: '#6c757d',
+                  color: 'white',
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 'bold'
+                }}
+              >
+                📘 동암정신 7개요소 PDF
+              </a>
+            </div>
+          );
+        })()}
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 

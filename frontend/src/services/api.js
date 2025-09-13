@@ -14,8 +14,8 @@ const supabase = import.meta.env.VITE_SUPABASE_URL ? createClient(
 
 export async function getSpirits() {
   try {
-    // Vercel Functions에서 동암정신 데이터 가져오기
-    const { data } = await api.get('/generate-prompt');
+    // 우선 백엔드/온프렘 API에서 동암정신 데이터 가져오기
+    const { data } = await api.get('/spirits');
     if (data && Array.isArray(data.spirits)) return data;
   } catch (err) {
     console.warn('API spirits failed, using fallback');

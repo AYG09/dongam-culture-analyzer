@@ -40,6 +40,23 @@ def load_spirits() -> Dict[str, Any]:
 	return data
 
 
+def _normalize_element_id(eid: Any) -> Any:
+	"""Normalize element_id to the form '유형_#' or '무형_#'.
+	Accepts inputs like '유형1', '무형3', '유형-2', '무형 4', '유형_5'.
+	Returns non-str inputs unchanged.
+	"""
+	if not isinstance(eid, str):
+		return eid
+	s = eid.strip().replace('-', '_').replace(' ', '_')
+	if s.startswith('유형') and not s.startswith('유형_'):
+		s = s.replace('유형', '유형_', 1)
+	if s.startswith('무형') and not s.startswith('무형_'):
+		s = s.replace('무형', '무형_', 1)
+	while '__' in s:
+		s = s.replace('__', '_')
+	return s
+
+
 def get_spirit_by_id(data: Dict[str, Any], spirit_id: str) -> Optional[Dict[str, Any]]:
 	for s in data.get("spirits", []):
 		if s.get("id") == spirit_id:
@@ -152,6 +169,7 @@ def build_prompt(payload: Dict[str, Any], spirit: Dict[str, Any]) -> str:
 	lines.append("[출력 형식]")
 	lines.append("- 반드시 아래 JSON 스키마에 맞는 순수 JSON만 출력")
 	lines.append("- element_id는 실제 존재하는 유형/무형 요소 ID를 사용 (예: 유형_1, 무형_3)")
+	lines.append("- '유형3', '무형-2', '유형 4' 등은 금지. 반드시 '유형_3', '무형_2'처럼 언더스코어 형식을 사용할 것")
 	lines.append("")
 
 	lines.append("[JSON 스키마 - 정확한 element_id 매핑 필수]")
@@ -160,7 +178,8 @@ def build_prompt(payload: Dict[str, Any], spirit: Dict[str, Any]) -> str:
 	# 동적으로 element_id 매핑 생성
 	if spirit.get("tangible_elements"):
 		for element in spirit["tangible_elements"]:
-			lines.append(f"{element['id']}: {element['name']}")
+			eid = _normalize_element_id(element.get('id', ''))
+			lines.append(f"{eid}: {element['name']}")
 	else:
 		# 기존 불우재 정신 매핑 (fallback)
 		lines.append("유형_1: [소통 절차/방식] 주기적 도전과제 대화, 논의")
@@ -176,7 +195,8 @@ def build_prompt(payload: Dict[str, Any], spirit: Dict[str, Any]) -> str:
 
 	if spirit.get("intangible_elements"):
 		for element in spirit["intangible_elements"]:
-			lines.append(f"{element['id']}: {element['name']}")
+			eid = _normalize_element_id(element.get('id', ''))
+			lines.append(f"{eid}: {element['name']}")
 	else:
 		# 기존 불우재 정신 무형 요소 매핑 (fallback)
 		lines.append("무형_1: 세상은 완벽하지 않아도 괜찮다 세상과 타인에 대한 이상적인 기대를 내려 놓으면 원망보다는 수용과 이해가 생긴다")
