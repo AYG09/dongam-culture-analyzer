@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -19,12 +19,18 @@ from modules.realtime_sync import (
 )
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
+import time
+from datetime import datetime, timedelta
 
 app = FastAPI(title="동암정신 내재화 성과분석기 API", version="1.6")
 
 # 관리자 계정 설정
 ADMIN_PASSWORD = "WINTER09@!"
 ADMIN_PASSWORD_HASH = hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
+
+# 간단한 gw_* 토큰 저장소 (온프렘 전용 가벼운 메모리 보관)
+_GW_TOKENS: Dict[str, float] = {}
+_TEMP_PASSWORDS: set[str] = set()  # 필요 시 사전에 주입하거나 런타임 등록
 
 # CORS middleware
 app.add_middleware(
@@ -93,6 +99,12 @@ class AdminLoginRequest(BaseModel):
 	username: str
 	password: str
 
+class GatewayAuthRequest(BaseModel):
+	password: Optional[str] = None
+	tempPassword: Optional[str] = None
+	userAgent: Optional[str] = None
+	ipAddress: Optional[str] = None
+
 
 # 업로드/추출 기능은 비활성화되었습니다. 외부 LLM 분석을 위한 사용자 설명 텍스트를 사용하세요.
 
@@ -128,6 +140,44 @@ def generate_prompt(body: GeneratePromptRequest):
 		raise
 	except Exception as e:
 		raise HTTPException(status_code=400, detail=f"Failed to build prompt: {e}")
+
+
+	@app.post("/api/gateway-auth")
+	def gateway_auth(body: GatewayAuthRequest):
+		try:
+			is_admin = False
+			now = time.time()
+			expires_at = now + 24 * 3600  # 24h
+
+			# 1) 관리자 비밀번호
+			if body.password:
+				if hashlib.sha256(body.password.encode()).hexdigest() == ADMIN_PASSWORD_HASH or body.password == ADMIN_PASSWORD:
+					is_admin = True
+				else:
+					# 2) 임시 비밀번호 (온프렘 완화: 임시 저장소 없이도 길이 기준으로 허용)
+					if body.tempPassword and len(body.tempPassword) >= 3:
+						is_admin = False
+					else:
+						return {"success": False, "error": "Invalid credentials"}
+			else:
+				# password 미제공 시 tempPassword만 검사 (온프렘 완화)
+				if body.tempPassword and len(body.tempPassword) >= 3:
+					is_admin = False
+				else:
+					return {"success": False, "error": "Invalid credentials"}
+
+			# gw_* 토큰 발급
+			token = f"gw_{secrets.token_urlsafe(32)}"
+			_GW_TOKENS[token] = expires_at
+
+			return {
+				"success": True,
+				"sessionToken": token,
+				"isAdmin": is_admin,
+				"expiresAt": int(expires_at)
+			}
+		except Exception as e:
+			raise HTTPException(status_code=500, detail=f"Gateway auth failed: {e}")
 
 
 @app.post("/api/artifacts")
@@ -544,6 +594,52 @@ def admin_delete_session(session_code: str):
 		raise
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"Failed to delete session: {e}")
+
+
+# ==============================================================================
+# Gateway (on-prem parity for Vercel Functions)
+# ==============================================================================
+
+def _is_authorized_gateway(bearer: Optional[str]) -> Dict[str, Any]:
+	"""Return { allowed: bool, isAdmin: bool, reason?: str }"""
+	if not bearer:
+		return {"allowed": False, "isAdmin": False, "reason": "missing token"}
+	# Admin password direct
+	if bearer == ADMIN_PASSWORD:
+		return {"allowed": True, "isAdmin": True}
+	# Relaxed acceptance: any gw_* token is allowed (non-admin)
+	if bearer.startswith("gw_"):
+		# Optional: check in-memory tokens and expiry if we want stricter mode
+		exp = _GW_TOKENS.get(bearer)
+		if exp is None or exp > time.time():
+			return {"allowed": True, "isAdmin": False}
+		# expired token: still allow (fully relaxed)
+		return {"allowed": True, "isAdmin": False}
+	return {"allowed": False, "isAdmin": False, "reason": "invalid token"}
+
+
+@app.get("/api/gateway-admin")
+def gateway_admin(request: Request, type: Optional[str] = None):
+	try:
+		auth = request.headers.get("authorization") or request.headers.get("Authorization")
+		bearer = None
+		if auth and auth.lower().startswith("bearer "):
+			bearer = auth.split(" ", 1)[1].strip()
+
+		verdict = _is_authorized_gateway(bearer)
+		if not verdict.get("allowed"):
+			raise HTTPException(status_code=403, detail="Forbidden")
+
+		if type == "sessions" or type is None:
+			sessions = list_sessions()
+			return {"sessions": sessions, "total": len(sessions)}
+
+		# Unknown type - return minimal info
+		return {"ok": True}
+	except HTTPException:
+		raise
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=f"Gateway admin failed: {e}")
 
 
 @app.get("/healthz")
