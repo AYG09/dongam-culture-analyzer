@@ -72,7 +72,7 @@ export default async function handler(req, res) {
       console.log(`[LOCK API] Field not locked, proceeding`)
     }
 
-    const upsertData = {
+    const lockData = {
       session_code: sessionCode,
       field_id: fieldId,
       user_id: userId,
@@ -80,19 +80,44 @@ export default async function handler(req, res) {
       locked_at: now.toISOString(),
       updated_at: now.toISOString()
     }
-    console.log(`[LOCK API] Upserting:`, upsertData)
+    console.log(`[LOCK API] Attempting to lock with data:`, lockData)
 
-    const { data: upsertResult, error } = await supabase
+    // 명시적으로 UPDATE 시도 후 INSERT 방식 사용
+    const { data: updateResult, error: updateError } = await supabase
       .from('field_states')
-      .upsert(upsertData)
+      .update({
+        user_id: userId,
+        locked_by: userId,
+        locked_at: now.toISOString(),
+        updated_at: now.toISOString()
+      })
+      .eq('session_code', sessionCode)
+      .eq('field_id', fieldId)
       .select()
 
-    if (error) {
-      console.error('[LOCK API] Upsert error:', error)
-      throw error
+    if (updateError) {
+      console.error('[LOCK API] Update error:', updateError)
+      throw updateError
     }
 
-    console.log(`[LOCK API] Upsert success:`, upsertResult)
+    if (updateResult && updateResult.length > 0) {
+      console.log(`[LOCK API] Updated existing record:`, updateResult)
+    } else {
+      // 레코드가 없으면 INSERT
+      console.log(`[LOCK API] No existing record, inserting new one`)
+      const { data: insertResult, error: insertError } = await supabase
+        .from('field_states')
+        .insert(lockData)
+        .select()
+
+      if (insertError) {
+        console.error('[LOCK API] Insert error:', insertError)
+        throw insertError
+      }
+      console.log(`[LOCK API] Inserted new record:`, insertResult)
+    }
+
+    console.log(`[LOCK API] Lock operation completed successfully`)
     return res.status(200).json({ success: true, message: 'Field locked' })
   } catch (error) {
     console.error('[LOCK API] General error:', error)
