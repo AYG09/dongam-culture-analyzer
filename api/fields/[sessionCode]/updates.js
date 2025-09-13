@@ -55,12 +55,13 @@ export default async function handler(req, res) {
       .single()
 
     if (sessionError || !sessionData) {
-      console.log(`[Field Updates] Session not found: ${sessionCode}`)
-      res.status(404).json({ 
-        error: 'Session not found',
+      console.log(`[Field Updates] Session not found: ${sessionCode} — returning empty payload (200)`)
+      // FastAPI 구현과 일치: 세션을 찾지 못해도 200으로 빈 응답 반환하여 클라이언트가 폴링을 계속하도록 함
+      res.status(200).json({
         fields: {},
         values: {},
-        lastUpdate: sinceTimestamp
+        lastUpdate: sinceTimestamp,
+        timestamp: new Date().toISOString()
       })
       return
     }
