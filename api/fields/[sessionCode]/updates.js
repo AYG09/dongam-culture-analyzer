@@ -89,18 +89,20 @@ export default async function handler(req, res) {
 
     console.log(`[Field Updates] Found ${data?.length || 0} field updates`)
 
-    const fields = {}
-    const values = {}
+  const fields = {}
+  const values = {}
     let lastUpdate = sinceTimestamp
 
     if (data && data.length > 0) {
       data.forEach(field => {
+        // 프런트(useRealtimeSync)가 기대하는 camelCase 스키마로 변환
         fields[field.field_id] = {
-          locked_by: field.locked_by,
-          locked_at: field.locked_at,
-          user_id: field.user_id
+          lockedBy: field.locked_by || null,
+          lockedAt: field.locked_at || null,
+          userId: field.user_id || null,
         }
-        values[field.field_id] = field.value || ''
+        // 값 객체는 { value: string } 형태
+        values[field.field_id] = { value: field.value || '' }
 
         const updateTime = new Date(field.updated_at).getTime()
         if (updateTime > lastUpdate) {
