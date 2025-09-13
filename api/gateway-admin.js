@@ -48,14 +48,21 @@ export default async function handler(req, res) {
 
       case 'POST': {
         // 새 임시 비밀번호 생성
-        const { password, expiresAt } = req.body
+        const { password, expiresAt, expireHours, description, maxUses } = req.body
 
         if (!password) {
           return res.status(400).json({ error: '비밀번호를 입력해주세요.' })
         }
 
-        // 만료일 설정 (기본: 24시간 후)
-        const expiry = expiresAt ? new Date(expiresAt) : new Date(Date.now() + 24 * 60 * 60 * 1000)
+        // 만료일 설정 (expireHours 우선, 기본: 24시간 후)
+        let expiry
+        if (expiresAt) {
+          expiry = new Date(expiresAt)
+        } else if (expireHours) {
+          expiry = new Date(Date.now() + expireHours * 60 * 60 * 1000)
+        } else {
+          expiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
+        }
 
         const { data, error } = await supabase
           .from('temp_passwords')
@@ -64,7 +71,9 @@ export default async function handler(req, res) {
               password: password,
               expires_at: expiry.toISOString(),
               is_active: true,
-              created_at: new Date().toISOString()
+              created_at: new Date().toISOString(),
+              description: description || null,
+              max_uses: maxUses ? parseInt(maxUses) : null
             }
           ])
           .select()
