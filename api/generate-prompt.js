@@ -85,29 +85,31 @@ function buildPrompt(payload, spirit) {
   prompt += `{\n`
   prompt += `  "affected_elements": [\n`
   
-  // 실제 동암정신 요소들의 ID와 이름을 포함하여 예시 생성
+  // 실제 동암정신 요소들의 ID와 이름을 포함하여 **전체 요소** 예시 생성
   const exampleElements = []
   
-  // 유형 요소들 (일부만 예시로)
+  // 유형 요소들 (전체 포함)
   if (spirit.tangible_elements && spirit.tangible_elements.length > 0) {
-    spirit.tangible_elements.slice(0, 2).forEach(element => {
+    spirit.tangible_elements.forEach(element => {
       exampleElements.push(`    {\n      "element_id": "${element.id}",\n      "element_name": "${element.name}",\n      "contribution_level": "high|medium|low",\n      "activity_source": "ca|leader",\n      "evidence": "구체적인 기여 활동 내용과 근거"\n    }`)
     })
   }
   
-  // 무형 요소들 (일부만 예시로)
+  // 무형 요소들 (전체 포함)
   if (spirit.intangible_elements && spirit.intangible_elements.length > 0) {
-    spirit.intangible_elements.slice(0, 2).forEach(element => {
+    spirit.intangible_elements.forEach(element => {
       if (element.name && element.name.trim()) { // 빈 요소 제외
         exampleElements.push(`    {\n      "element_id": "${element.id}",\n      "element_name": "${element.name}",\n      "contribution_level": "high|medium|low",\n      "activity_source": "ca|leader",\n      "evidence": "구체적인 기여 활동 내용과 근거"\n    }`)
       }
     })
   }
   
-  // 행동 요소들 (일부만 예시로)
+  // 행동 요소들 (전체 포함, 제목 제외)
   if (spirit.behaviors && spirit.behaviors.length > 0) {
-    spirit.behaviors.slice(1, 3).forEach(behavior => { // 첫 번째(제목) 제외하고 2개
-      exampleElements.push(`    {\n      "element_id": "${behavior.id}",\n      "element_name": "${behavior.name}",\n      "contribution_level": "high|medium|low",\n      "activity_source": "ca|leader",\n      "evidence": "구체적인 기여 활동 내용과 근거"\n    }`)
+    spirit.behaviors.forEach(behavior => {
+      if (behavior.id !== '행동1') { // 제목 제외
+        exampleElements.push(`    {\n      "element_id": "${behavior.id}",\n      "element_name": "${behavior.name}",\n      "contribution_level": "high|medium|low",\n      "activity_source": "ca|leader",\n      "evidence": "구체적인 기여 활동 내용과 근거"\n    }`)
+      }
     })
   }
   
