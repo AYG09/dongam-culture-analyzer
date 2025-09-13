@@ -101,15 +101,15 @@ export default async function handler(req, res) {
         const { password, sessionId } = req.query
 
         if (sessionId) {
-          // 세션 삭제 (실제로는 access log 레코드 삭제)
+          // 세션 삭제 (sessions 테이블에서 세션 코드로 삭제)
           if (!sessionId) {
             return res.status(400).json({ error: '세션 ID가 필요합니다.' })
           }
 
           const { error } = await supabase
-            .from('gateway_access_logs')
+            .from('sessions')
             .delete()
-            .eq('session_token', sessionId)
+            .eq('code', sessionId)
 
           if (error) {
             console.error('Session delete error:', error)
@@ -176,15 +176,15 @@ async function handleGetSessions(req, res, { search, page, limit }) {
   const offset = (parseInt(page) - 1) * parseInt(limit);
 
   try {
+    // 실제 세션 데이터는 sessions 테이블에 있음!
     let query = supabase
-      .from('gateway_access_logs')
+      .from('sessions')
       .select('*', { count: 'exact' })
-      .eq('success', true)
       .order('created_at', { ascending: false });
 
-    // 검색 기능 - IP 주소, User Agent에서 검색
+    // 검색 기능 - 세션명, 코드, 설명에서 검색
     if (search && search.trim()) {
-      query = query.or(`ip_address.ilike.%${search}%,user_agent.ilike.%${search}%,session_token.ilike.%${search}%`);
+      query = query.or(`name.ilike.%${search}%,code.ilike.%${search}%,description.ilike.%${search}%`);
     }
 
     const { data: sessions, error, count } = await query
@@ -192,20 +192,6 @@ async function handleGetSessions(req, res, { search, page, limit }) {
 
     if (error) {
       console.error('Sessions fetch error:', error);
-      
-      // 테이블이 없는 경우 빈 배열 반환
-      if (error.code === '42P01') {
-        console.log('gateway_access_logs 테이블이 없습니다. 빈 세션 목록을 반환합니다.');
-        return res.status(200).json({
-          sessions: [],
-          total: 0,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          totalPages: 0,
-          notice: 'gateway_access_logs 테이블이 생성되지 않았습니다. 로그인 후 세션이 표시됩니다.'
-        });
-      }
-      
       return res.status(500).json({ error: '세션 목록을 가져오는데 실패했습니다.' });
     }
 

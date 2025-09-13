@@ -554,7 +554,7 @@ const AdminGateway = () => {
             <div className="search-box">
               <input
                 type="text"
-                placeholder="세션 ID, IP 주소, User Agent로 검색..."
+                placeholder="세션명, 코드, 설명으로 검색..."
                 value={sessionSearch}
                 onChange={(e) => setSessionSearch(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSessionSearch()}
@@ -579,18 +579,19 @@ const AdminGateway = () => {
             {sessionsLoading ? (
               <div className="loading">세션 목록을 불러오는 중...</div>
             ) : sessions.length === 0 ? (
-              <div className="no-sessions">활성 세션이 없습니다.</div>
+              <div className="no-sessions">생성된 세션이 없습니다.</div>
             ) : (
               <div className="sessions-list">
                 {sessions.map((session) => (
-                  <div key={session.session_token || session.id} className="session-item">
+                  <div key={session.code} className="session-item">
                     <div className="session-header">
                       <div className="session-main">
-                        <code className="session-id">{session.session_token || 'N/A'}</code>
-                        <span className="session-ip">{session.ip_address}</span>
+                        <code className="session-id">{session.code}</code>
+                        <span className="session-name">{session.name}</span>
+                        <span className={`status-badge ${session.status}`}>{session.status}</span>
                       </div>
                       <button
-                        onClick={() => handleDeleteSession(session.session_token || session.id)}
+                        onClick={() => handleDeleteSession(session.code)}
                         className="delete-btn"
                         title="세션 삭제"
                       >
@@ -599,15 +600,15 @@ const AdminGateway = () => {
                     </div>
                     
                     <div className="session-details">
-                      <div className="meta-info">
-                        <span>로그인: {new Date(session.created_at).toLocaleString()}</span>
-                        <span>비밀번호: {session.password_used}</span>
-                        <span>타입: {session.password_type}</span>
-                        <span>성공: {session.success ? '✅' : '❌'}</span>
-                      </div>
-                      {session.user_agent && (
-                        <p className="user-agent">{session.user_agent}</p>
+                      {session.description && (
+                        <p className="description">{session.description}</p>
                       )}
+                      <div className="meta-info">
+                        <span>생성: {new Date(session.created_at).toLocaleString()}</span>
+                        <span>최근 접근: {new Date(session.last_access).toLocaleString()}</span>
+                        <span>참가자: {session.participant_count}명</span>
+                        <span>상태: {session.status}</span>
+                      </div>
                     </div>
                   </div>
                 ))}
