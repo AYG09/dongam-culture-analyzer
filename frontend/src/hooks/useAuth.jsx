@@ -38,34 +38,36 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     
     try {
-      const response = await fetch(`${dynamicApiBase}/admin/login`, {
+      // Gateway 인증 엔드포인트 사용 (admin 비번 또는 임시 비번)
+      const response = await fetch(`${dynamicApiBase}/gateway-auth`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: 'ADMIN',
           password: password,
         }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data?.success) {
         const authData = {
-          username: 'ADMIN',
-          token: data.token || 'admin-token',
+          username: data.isAdmin ? 'ADMIN' : 'TEMP',
+          token: data.sessionToken, // gw_* 토큰
+          isAdmin: !!data.isAdmin,
+          expiresAt: data.expiresAt || null,
           loginTime: new Date().toISOString(),
         };
-        
+
         setIsAuthenticated(true);
         setAdminInfo(authData);
         localStorage.setItem('admin_auth', JSON.stringify(authData));
-        
+
         return { success: true };
-      } else {
-        const errorData = await response.json();
-        return { success: false, error: errorData.detail || '인증에 실패했습니다.' };
       }
+
+      return { success: false, error: data?.error || '인증에 실패했습니다.' };
     } catch (error) {
       return { success: false, error: '네트워크 오류가 발생했습니다.' };
     } finally {
@@ -83,17 +85,17 @@ export const AuthProvider = ({ children }) => {
     if (!isAuthenticated) return [];
 
     try {
-      const response = await fetch(`${dynamicApiBase}/admin/sessions`, {
-        headers: {
-          'Authorization': `Bearer ${adminInfo?.token}`,
-        },
-      });
+      // gateway-admin 엔드포인트로 실제 sessions 테이블 조회
+      const bearer = adminInfo?.token || (import.meta.env.VITE_GATEWAY_ADMIN_PASSWORD ? `${import.meta.env.VITE_GATEWAY_ADMIN_PASSWORD}` : '');
+      const headers = bearer ? { 'Authorization': `Bearer ${bearer}` } : {};
+      const response = await fetch(`${dynamicApiBase}/gateway-admin?type=sessions`, { headers });
 
       if (response.ok) {
         const data = await response.json();
+        // 서버는 { sessions: [...], total, page, ... } 형태를 반환
         return data.sessions || [];
       }
-      
+
       return [];
     } catch (error) {
       console.error('Failed to fetch all sessions:', error);

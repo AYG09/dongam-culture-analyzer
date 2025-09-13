@@ -47,6 +47,7 @@ export const AdminLogin = ({ onClose }) => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="관리자 비밀번호를 입력하세요"
               disabled={loading}
+              autoComplete="new-password"
               autoFocus
             />
           </div>

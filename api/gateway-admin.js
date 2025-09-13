@@ -22,8 +22,38 @@ export default async function handler(req, res) {
     }
 
     const token = authHeader.substring(7)
+    // 1) 환경변수 기반 관리자 패스워드와 일치하면 통과
     if (token !== process.env.GATEWAY_ADMIN_PASSWORD) {
-      return res.status(403).json({ error: '관리자 권한이 필요합니다.' })
+      // 2) gateway-auth가 발급한 관리자 세션 토큰(gw_*)도 허용
+      //    - gateway_access_logs에 success=true AND password_type='admin' AND session_token 일치
+      //    - 발급(또는 마지막 사용) 시점으로부터 24시간 유효
+      if (!token.startsWith('gw_')) {
+        return res.status(403).json({ error: '관리자 권한이 필요합니다.' })
+      }
+
+      // 세션 토큰 검증
+      const now = Date.now()
+      const TTL_MS = 24 * 60 * 60 * 1000 // 24시간
+
+      const { data: log, error: logError } = await supabase
+        .from('gateway_access_logs')
+        .select('session_token, success, password_type, created_at, last_used_at')
+        .eq('session_token', token)
+        .eq('success', true)
+        .eq('password_type', 'admin')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (logError || !log) {
+        return res.status(403).json({ error: '관리자 권한이 필요합니다.' })
+      }
+
+      const ts = new Date(log.last_used_at || log.created_at).getTime()
+      if (!ts || now - ts > TTL_MS) {
+        return res.status(403).json({ error: '관리자 권한이 만료되었습니다.' })
+      }
+      // 검증 통과 → 계속 진행
     }
 
     switch (req.method) {

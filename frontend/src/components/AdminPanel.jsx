@@ -14,7 +14,17 @@ export const AdminPanel = ({ onClose }) => {
     
     try {
       const sessionList = await getAllSessions();
-      setSessions(sessionList);
+      // Supabase(snake_case) -> UI(camelCase) 매핑 가드
+      const normalized = (sessionList || []).map(s => ({
+        code: s.code,
+        name: s.name,
+        description: s.description,
+        participantCount: s.participant_count ?? s.participantCount ?? 0,
+        createdAt: s.created_at ? Math.floor(new Date(s.created_at).getTime() / 1000) : (s.createdAt || 0),
+        lastActivity: s.last_access ? Math.floor(new Date(s.last_access).getTime() / 1000) : (s.lastActivity || 0),
+        status: s.status || 'active',
+      }));
+      setSessions(normalized);
     } catch (error) {
       setError('세션 목록을 불러올 수 없습니다.');
     } finally {
@@ -90,7 +100,7 @@ export const AdminPanel = ({ onClose }) => {
             {loading ? (
               <div className="loading-message">세션 목록을 불러오는 중...</div>
             ) : sessions.length === 0 ? (
-              <div className="no-sessions">생성된 세션이 없습니다.</div>
+              <div className="no-sessions">생성된 세션이 없습니다.<br/>우측 상단의 🔄 새로고침을 눌러 다시 시도하세요.</div>
             ) : (
               <div className="sessions-grid">
                 {sessions.map((session) => (
