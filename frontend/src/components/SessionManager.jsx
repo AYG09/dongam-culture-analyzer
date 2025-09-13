@@ -181,7 +181,7 @@ export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE}/sessions/${selectedSession.code}/join`, {
+      const response = await fetch(`${apiBase}/sessions/${selectedSession.code}/join`, {
         method: 'POST',
       });
 
