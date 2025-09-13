@@ -3,7 +3,7 @@ import { getApiUrl } from '../utils/networkUtils';
 
 let dynamicApiBase = import.meta.env.VITE_dynamicApiBase_URL || '/api';
 
-// 동적 API URL 초기화
+// 동적 API URL 초기화 (실패 시 '/api' 유지)
 async function initializeRealtimeApi() {
   try {
     dynamicApiBase = await getApiUrl();
@@ -12,159 +12,275 @@ async function initializeRealtimeApi() {
   }
 }
 
+// 고유 사용자 ID 생성
+function generateUserId() {
+  return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
 export const useRealtimeSync = (sessionCode) => {
+  // 상태
   const [fieldStates, setFieldStates] = useState({});
   const [fieldValues, setFieldValues] = useState({});
   const [lastUpdate, setLastUpdate] = useState(0);
-  
-  const userId = useRef(generateUserId()).current;
-  const pollInterval = useRef(null);
-  const lockTimeouts = useRef({});
 
-  // 컴포넌트 초기화 시 동적 API URL 설정
+  // 참조들 (stale-closure 방지)
+  const userIdRef = useRef(generateUserId());
+  const sessionCodeRef = useRef(sessionCode);
+  const lastUpdateRef = useRef(0);
+  const lockTimeouts = useRef({});
+  const pollTimer = useRef(null);
+  const inFlight = useRef(false);
+  const abortRef = useRef(null);
+  const backoffMsRef = useRef(500);
+
+  const MAX_BACKOFF = 5000;
+  const MIN_BACKOFF = 500;
+
+  // 동적 API URL 초기화
   useEffect(() => {
     initializeRealtimeApi();
   }, []);
 
-  // 고유 사용자 ID 생성
-  function generateUserId() {
-    return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
+  // sessionCode 변경 시 참조/상태 리셋
+  useEffect(() => {
+    sessionCodeRef.current = sessionCode;
+    // 세션이 바뀌면 타임라인 초기화
+    setLastUpdate(0);
+    lastUpdateRef.current = 0;
+    backoffMsRef.current = MIN_BACKOFF;
 
-  // 필드 상태 폴링
-  const pollUpdates = useCallback(async () => {
-    if (!sessionCode) return;
+    // 기존 타이머 정리 후 즉시 폴링 시도
+    if (pollTimer.current) clearTimeout(pollTimer.current);
+    if (sessionCode) {
+      if (!inFlight.current) {
+        void pollLoop();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionCode]);
+
+  // lastUpdate 동기화
+  useEffect(() => {
+    lastUpdateRef.current = lastUpdate;
+  }, [lastUpdate]);
+
+  // 다음 폴링 예약 (가변 간격 + 지터)
+  const scheduleNext = useCallback((delayMs) => {
+    if (pollTimer.current) clearTimeout(pollTimer.current);
+    const jitter = Math.floor(Math.random() * 200);
+    pollTimer.current = setTimeout(() => {
+      void pollLoop();
+    }, Math.max(0, delayMs) + jitter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 필드 상태 폴링 루프 (refs만 읽어 stale 방지)
+  const pollLoop = useCallback(async () => {
+    const code = sessionCodeRef.current;
+    if (!code) return;
+    if (typeof document !== 'undefined' && document.hidden) {
+      // 화면 비가시 상태 → 천천히
+      scheduleNext(Math.min(Math.max(backoffMsRef.current, 2000), MAX_BACKOFF));
+      return;
+    }
+    if (inFlight.current) return; // 이미 진행 중
+
+    inFlight.current = true;
+    if (abortRef.current) {
+      try { abortRef.current.abort(); } catch {}
+    }
+    abortRef.current = new AbortController();
 
     try {
-      const response = await fetch(
-        `${dynamicApiBase}/fields/${sessionCode}/updates?since=${lastUpdate}`
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.lastUpdate > lastUpdate) {
-          // 서버에서 받은 필드 상태로 완전히 대체 (단순화)
-          console.log(`[DEBUG] Updating field states:`, data.fields);
-          setFieldStates(data.fields || {});
-          setFieldValues(prev => ({ ...prev, ...data.values }));
-          setLastUpdate(data.lastUpdate);
+      const since = lastUpdateRef.current || 0;
+      const res = await fetch(`${dynamicApiBase}/fields/${code}/updates?since=${since}`,
+        {
+          method: 'GET',
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+          signal: abortRef.current.signal,
         }
-      } else if (response.status === 404) {
-        // 세션이 없는 경우 - 무시하고 계속
-        console.log('Session not found, will retry...');
+      );
+
+      if (res.status === 304) {
+        // 변경 없음 → 백오프 증가
+        backoffMsRef.current = Math.min(backoffMsRef.current + 500, MAX_BACKOFF);
+      } else if (res.ok) {
+        const data = await res.json();
+        const serverLast = Number(data.lastUpdate || 0);
+        if (serverLast > (lastUpdateRef.current || 0)) {
+          setFieldStates(data.fields || {});
+          setFieldValues(prev => ({ ...prev, ...(data.values || {}) }));
+          setLastUpdate(serverLast);
+          backoffMsRef.current = MIN_BACKOFF; // 변경 감지 → 빠르게
+        } else {
+          backoffMsRef.current = Math.min(backoffMsRef.current + 500, MAX_BACKOFF);
+        }
+      } else if (res.status === 404) {
+        // 세션 없음 → 천천히 재시도
+        backoffMsRef.current = Math.min(Math.max(backoffMsRef.current, 2000), MAX_BACKOFF);
+      } else if (res.status === 429) {
+        // 레이트 리밋 → 큰 백오프
+        backoffMsRef.current = Math.min(5000, MAX_BACKOFF);
       } else {
-        console.error('Failed to poll field updates:', response.status, response.statusText);
+        console.error('Failed to poll field updates:', res.status, res.statusText);
+        backoffMsRef.current = Math.min(Math.max(backoffMsRef.current, 2000), MAX_BACKOFF);
       }
-    } catch (error) {
-      console.error('Failed to poll field updates:', error);
+    } catch (err) {
+      if (!(err && err.name === 'AbortError')) {
+        console.error('Failed to poll field updates:', err);
+        backoffMsRef.current = Math.min(Math.max(backoffMsRef.current, 2000), MAX_BACKOFF);
+      }
+    } finally {
+      inFlight.current = false;
+      scheduleNext(backoffMsRef.current);
     }
-  }, [sessionCode, lastUpdate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 필드 잠금 요청
   const lockField = useCallback(async (fieldId) => {
-    if (!sessionCode) return false;
-
+    if (!sessionCodeRef.current) return false;
     try {
       const response = await fetch(`${dynamicApiBase}/fields/lock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionCode,
+          sessionCode: sessionCodeRef.current,
           fieldId,
-          userId
-        })
+          userId: userIdRef.current,
+        }),
       });
-
       const result = await response.json();
       if (result.success) {
         // 5분 후 자동 잠금 해제
         if (lockTimeouts.current[fieldId]) {
           clearTimeout(lockTimeouts.current[fieldId]);
         }
-        
         lockTimeouts.current[fieldId] = setTimeout(() => {
-          unlockField(fieldId);
-        }, 300000); // 5분
-        
+          void unlockField(fieldId);
+        }, 300000);
         return true;
       }
-      
       return false;
     } catch (error) {
       console.error('Failed to lock field:', error);
       return false;
     }
-  }, [sessionCode, userId]);
+  }, [unlockField]);
 
   // 필드 잠금 해제
   const unlockField = useCallback(async (fieldId) => {
-    if (!sessionCode) return;
-
+    if (!sessionCodeRef.current) return;
     // 타임아웃 정리
     if (lockTimeouts.current[fieldId]) {
       clearTimeout(lockTimeouts.current[fieldId]);
       delete lockTimeouts.current[fieldId];
     }
-
     try {
       await fetch(`${dynamicApiBase}/fields/unlock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionCode,
+          sessionCode: sessionCodeRef.current,
           fieldId,
-          userId
-        })
+          userId: userIdRef.current,
+        }),
       });
     } catch (error) {
       console.error('Failed to unlock field:', error);
     }
-  }, [sessionCode, userId]);
+  }, []);
 
   // 필드 값 업데이트
   const updateFieldValue = useCallback(async (fieldId, value) => {
-    if (!sessionCode) return false;
-
+    if (!sessionCodeRef.current) return false;
     try {
       const response = await fetch(`${dynamicApiBase}/fields/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionCode,
+          sessionCode: sessionCodeRef.current,
           fieldId,
           value,
-          userId
-        })
+          userId: userIdRef.current,
+        }),
       });
-
       const result = await response.json();
+      if (result.success) {
+        // 사용자 입력 시 즉시 빠른 폴링으로 전환하고 트리거
+        backoffMsRef.current = MIN_BACKOFF;
+        if (!inFlight.current) {
+          void pollLoop();
+        }
+      }
       return result.success;
     } catch (error) {
       console.error('Failed to update field:', error);
       return false;
     }
-  }, [sessionCode, userId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 폴링 시작/중지 + 가시성/온라인 상태 핸들링
+  useEffect(() => {
+    if (!sessionCodeRef.current) return;
+    // 즉시 한 번 실행
+    backoffMsRef.current = MIN_BACKOFF;
+    void pollLoop();
+
+    const onVisibility = () => {
+      if (!sessionCodeRef.current) return;
+      if (!document.hidden) {
+        backoffMsRef.current = MIN_BACKOFF;
+        if (!inFlight.current) void pollLoop();
+      }
+    };
+    const onOnline = () => {
+      if (!sessionCodeRef.current) return;
+      backoffMsRef.current = MIN_BACKOFF;
+      if (!inFlight.current) void pollLoop();
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('online', onOnline);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('online', onOnline);
+      if (pollTimer.current) clearTimeout(pollTimer.current);
+      if (abortRef.current) {
+        try { abortRef.current.abort(); } catch {}
+      }
+      // 모든 잠금 해제
+      Object.keys(lockTimeouts.current).forEach((fid) => {
+        void fetch(`${dynamicApiBase}/fields/unlock`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionCode: sessionCodeRef.current,
+            fieldId: fid,
+            userId: userIdRef.current,
+          }),
+        }).catch(() => {});
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 필드가 다른 사용자에 의해 잠겨있는지 확인
   const isFieldLocked = useCallback((fieldId) => {
     const fieldState = fieldStates[fieldId];
-    // 필드 상태가 없거나, 활성화되지 않았거나, 잠금자가 없으면 잠금되지 않음
-    if (!fieldState || !fieldState.isActive || !fieldState.lockedBy) {
-      return false;
-    }
-    
-    // 다른 사용자가 잠금한 경우만 true
-    return fieldState.lockedBy !== userId;
-  }, [fieldStates, userId]);
+    if (!fieldState || !fieldState.lockedBy) return false;
+    return fieldState.lockedBy !== userIdRef.current;
+  }, [fieldStates]);
 
   // 필드가 내가 잠근 것인지 확인
   const isFieldLockedByMe = useCallback((fieldId) => {
     const fieldState = fieldStates[fieldId];
-    if (!fieldState || !fieldState.isActive) return false;
-    
-    return fieldState.lockedBy === userId;
-  }, [fieldStates, userId]);
+    if (!fieldState) return false;
+    return fieldState.lockedBy === userIdRef.current;
+  }, [fieldStates]);
 
   // 필드 값 가져오기
   const getFieldValue = useCallback((fieldId) => {
@@ -172,30 +288,8 @@ export const useRealtimeSync = (sessionCode) => {
     return valueState ? valueState.value : '';
   }, [fieldValues]);
 
-  // 폴링 시작/중지
-  useEffect(() => {
-    if (sessionCode) {
-      // 즉시 한 번 실행
-      pollUpdates();
-      
-      // 500ms마다 폴링 (더 빠른 반응)
-      pollInterval.current = setInterval(pollUpdates, 500);
-      
-      return () => {
-        if (pollInterval.current) {
-          clearInterval(pollInterval.current);
-        }
-        
-        // 모든 잠금 해제
-        Object.keys(lockTimeouts.current).forEach(fieldId => {
-          unlockField(fieldId);
-        });
-      };
-    }
-  }, [sessionCode, pollUpdates]);
-
   return {
-    userId,
+    userId: userIdRef.current,
     lockField,
     unlockField,
     updateFieldValue,
@@ -203,6 +297,6 @@ export const useRealtimeSync = (sessionCode) => {
     isFieldLockedByMe,
     getFieldValue,
     fieldStates,
-    fieldValues
+    fieldValues,
   };
 };
