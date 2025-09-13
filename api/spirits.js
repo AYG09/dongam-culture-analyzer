@@ -1,8 +1,9 @@
 // GET /api/spirits
 // FastAPI의 /api/spirits와 동일한 스키마({ spirits: [...] })를 반환합니다.
-// 서버리스 함수 폴더(api/data)의 JSON을 ESM import로 포함합니다.
-
-import spiritsData from './data/dongam_spirit.json' assert { type: 'json' }
+// 서버리스 함수 폴더(api/data)의 JSON을 fs로 읽습니다(런타임 호환성 확보).
+import fs from 'fs/promises'
+import path from 'path'
+const DATA_PATH = path.join(process.cwd(), 'api', 'data', 'dongam_spirit.json')
 
 // 간단 캐시 (기본 60초)
 const TTL_SECONDS = Number(process.env.PROMPT_CACHE_TTL_SECONDS || 60)
@@ -12,7 +13,8 @@ async function loadSpirits() {
   const now = Date.now() / 1000
   if (CACHE.data && now - CACHE.ts < TTL_SECONDS) return CACHE.data
   try {
-    const data = spiritsData
+    const raw = await fs.readFile(DATA_PATH, 'utf-8')
+    const data = JSON.parse(raw)
     CACHE = { data, ts: now }
     return data
   } catch (e) {
