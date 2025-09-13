@@ -185,9 +185,9 @@ const AdminGateway = () => {
     }
   };
 
-  // 비밀번호 삭제
+  // 비밀번호 삭제 (강화된 확인 절차)
   const handleDeletePassword = async (id, password) => {
-    if (!confirm(`비밀번호 "${password}"를 삭제하시겠습니까?`)) {
+    if (!confirm(`⚠️ 임시 비밀번호 "${password}"를 삭제하시겠습니까?\n\n삭제되면 해당 비밀번호로 더 이상 로그인할 수 없습니다.`)) {
       return;
     }
 
@@ -274,9 +274,17 @@ const AdminGateway = () => {
     }
   };
 
-  // 세션 삭제
+  // 세션 삭제 (강화된 확인 절차)
   const handleDeleteSession = async (sessionId) => {
-    if (!confirm(`세션 "${sessionId}"을 삭제하시겠습니까?`)) {
+    // 첫 번째 확인
+    if (!confirm(`⚠️ 경고: 세션 "${sessionId}"을 정말로 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없으며, 해당 세션의 모든 데이터가 영구적으로 삭제됩니다.`)) {
+      return;
+    }
+    
+    // 두 번째 확인 (관리자 전용)
+    const confirmation = prompt(`삭제를 확정하려면 세션 코드 "${sessionId}"를 정확히 입력하세요:`);
+    if (confirmation !== sessionId) {
+      alert('세션 코드가 일치하지 않습니다. 삭제가 취소되었습니다.');
       return;
     }
 
@@ -325,8 +333,8 @@ const AdminGateway = () => {
   return (
     <div className="admin-gateway-container">
       <div className="admin-header">
-        <h2>Gateway 관리자 패널</h2>
-        <p>임시 비밀번호와 세션을 관리할 수 있습니다.</p>
+        <h2>🔧 관리자 패널</h2>
+        <p>시스템 전체를 관리할 수 있습니다 (임시 비밀번호, 세션 관리 등)</p>
       </div>
 
       {/* 탭 네비게이션 */}
@@ -335,13 +343,13 @@ const AdminGateway = () => {
           className={`tab-button ${activeTab === 'passwords' ? 'active' : ''}`}
           onClick={() => handleTabChange('passwords')}
         >
-          임시 비밀번호 관리
+          🔑 임시 비밀번호
         </button>
         <button 
           className={`tab-button ${activeTab === 'sessions' ? 'active' : ''}`}
           onClick={() => handleTabChange('sessions')}
         >
-          세션 관리
+          📊 워크샵 세션
         </button>
       </div>
 

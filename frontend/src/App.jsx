@@ -81,9 +81,29 @@ export default function App() {
 										marginRight: '8px'
 									}}
 								>
-									Gateway 관리
+									🔧 관리자 패널
 								</button>
 							)}
+							{/* 로그아웃 버튼 추가 */}
+							<button 
+								onClick={() => {
+									// localStorage에서 Gateway 인증 토큰 제거
+									localStorage.removeItem('gateway-auth-token');
+									// 페이지 새로고침하여 Gateway 로그인 화면으로 돌아가기
+									window.location.reload();
+								}}
+								style={{ 
+									background: 'transparent',
+									color: '#666',
+									border: '1px solid #ccc',
+									padding: '8px 16px',
+									borderRadius: '4px',
+									cursor: 'pointer'
+								}}
+								title="로그아웃"
+							>
+								🚪 로그아웃
+							</button>
 						</nav>
 					</div>
 				</header>

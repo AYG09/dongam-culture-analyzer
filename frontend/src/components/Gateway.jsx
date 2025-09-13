@@ -254,24 +254,9 @@ const Gateway = ({ children, onAuthenticated }) => {
     );
   }
 
-  // 인증됨 - 메인 앱 표시
+  // 인증됨 - 메인 앱 표시 (인증 헤더 제거하고 깔끔하게)
   return (
     <div className="gateway-authenticated">
-      {/* 인증된 사용자를 위한 헤더 (선택사항) */}
-      <div className="gateway-auth-header">
-        <div className="auth-status">
-          <span className="auth-indicator"></span>
-          <span className="auth-text">인증됨</span>
-        </div>
-        <button 
-          onClick={handleLogout}
-          className="logout-button"
-          title="로그아웃"
-        >
-          로그아웃
-        </button>
-      </div>
-      
       {/* 메인 애플리케이션 */}
       <div className="gateway-main-content">
         {children}
