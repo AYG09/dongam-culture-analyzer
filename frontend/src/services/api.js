@@ -18,7 +18,14 @@ export async function getSpirits() {
     const { data } = await api.get('/spirits');
     if (data && Array.isArray(data.spirits)) return data;
   } catch (err) {
-    console.warn('API spirits failed, using fallback');
+    console.warn('API /spirits failed, trying /generate-prompt (GET) ...');
+    try {
+      // Vercel Functions의 GET /api/generate-prompt가 동일 스키마를 반환하도록 구성됨
+      const { data } = await api.get('/generate-prompt');
+      if (data && Array.isArray(data.spirits)) return data;
+    } catch (e2) {
+      console.warn('API /generate-prompt failed, using static fallback');
+    }
   }
   
   // 정적 파일 폴백
