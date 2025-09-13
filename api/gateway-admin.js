@@ -192,6 +192,20 @@ async function handleGetSessions(req, res, { search, page, limit }) {
 
     if (error) {
       console.error('Sessions fetch error:', error);
+      
+      // 테이블이 없는 경우 빈 배열 반환
+      if (error.code === '42P01') {
+        console.log('gateway_access_logs 테이블이 없습니다. 빈 세션 목록을 반환합니다.');
+        return res.status(200).json({
+          sessions: [],
+          total: 0,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: 0,
+          notice: 'gateway_access_logs 테이블이 생성되지 않았습니다. 로그인 후 세션이 표시됩니다.'
+        });
+      }
+      
       return res.status(500).json({ error: '세션 목록을 가져오는데 실패했습니다.' });
     }
 

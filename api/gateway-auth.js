@@ -110,7 +110,8 @@ function generateToken() {
 // 접근 로그 저장 함수
 async function logAccess(ipAddress, userAgent, passwordType, passwordUsed, success, failureReason, sessionToken) {
   try {
-    await supabase
+    // 테이블이 존재하는지 먼저 확인하고 없으면 생성
+    const { data, error } = await supabase
       .from('gateway_access_logs')
       .insert({
         ip_address: ipAddress,
@@ -120,9 +121,18 @@ async function logAccess(ipAddress, userAgent, passwordType, passwordUsed, succe
         success: success,
         failure_reason: failureReason,
         session_token: sessionToken,
+        created_at: new Date().toISOString(),
         metadata: {}
       })
+    
+    if (error) {
+      console.error('Failed to log access:', error)
+      // 테이블이 없는 경우 생성 시도
+      if (error.code === '42P01') { // relation does not exist
+        console.log('gateway_access_logs 테이블이 없습니다. 테이블 생성이 필요합니다.')
+      }
+    }
   } catch (error) {
-    console.error('Failed to log access:', error)
+    console.error('Failed to log access (catch):', error)
   }
 }
