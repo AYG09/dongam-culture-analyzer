@@ -4,6 +4,7 @@ import { getApiUrl, getNetworkInfo } from '../utils/networkUtils';
 import { useAuth } from '../hooks/useAuth';
 import { AdminLogin } from './AdminLogin';
 import { AdminPanel } from './AdminPanel';
+import AdminGateway from './AdminGateway';
 
 export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
   const [mode, setMode] = useState('join');
@@ -16,7 +17,26 @@ export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
   const [apiBase, setApiBase] = useState(import.meta.env.VITE_API_BASE_URL || 'http://localhost:65432/api');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showGatewayPanel, setShowGatewayPanel] = useState(false);
   const { isAuthenticated } = useAuth();
+
+  // Gateway 관리자 확인
+  const isGatewayAdmin = () => {
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('gateway-auth-token');
+        if (stored) {
+          const authData = JSON.parse(stored);
+          if (Date.now() < authData.expiresAt && authData.isAdmin) {
+            return true;
+          }
+        }
+      } catch (error) {
+        console.error('Gateway auth check error:', error);
+      }
+    }
+    return false;
+  };
 
   // 세션 접속 URL 생성
   const generateSessionUrl = (sessionCode) => {
@@ -208,6 +228,14 @@ export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
           >
             새 세션 생성
           </button>
+          {isGatewayAdmin() && (
+            <button 
+              className={mode === 'gateway' ? 'active admin-tab' : 'admin-tab'}
+              onClick={() => setMode('gateway')}
+            >
+              🔐 임시 비밀번호 관리
+            </button>
+          )}
           <button 
             className={mode === 'list' ? 'active' : ''}
             onClick={() => setMode('list')}
@@ -326,6 +354,16 @@ export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
                 </div>
               ))
             )}
+          </div>
+        )}
+
+        {mode === 'gateway' && isGatewayAdmin() && (
+          <div className="gateway-panel-container">
+            <div className="gateway-info">
+              <h3>🔐 임시 비밀번호 관리</h3>
+              <p>워크샵, 데모, 테스트용 임시 비밀번호를 생성하고 관리할 수 있습니다.</p>
+            </div>
+            <AdminGateway />
           </div>
         )}
 
