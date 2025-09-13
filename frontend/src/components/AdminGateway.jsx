@@ -1,12 +1,97 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  gatewayFetch, 
-  getAuthToken, 
-  generateRandomPassword,
-  copyToClipboard,
-  getErrorMessage,
-  isAdmin 
-} from '../utils/gateway-utils.js';
+// 간소화된 유틸리티 함수들
+const generateRandomPassword = (length = 8) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+const getAuthToken = () => {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('gateway-auth-token');
+      if (stored) {
+        const authData = JSON.parse(stored);
+        if (Date.now() > authData.expiresAt) {
+          return null;
+        }
+        return authData;
+      }
+    } catch (error) {
+      console.error('Auth token parse error:', error);
+    }
+  }
+  return null;
+};
+
+const isAdmin = () => {
+  const authToken = getAuthToken();
+  return authToken && authToken.isAdmin;
+};
+
+const gatewayFetch = async (endpoint, options = {}) => {
+  const url = `/api${endpoint}`;
+  
+  const defaultOptions = {
+    headers: { 'Content-Type': 'application/json' },
+  };
+  
+  const authToken = getAuthToken();
+  if (authToken) {
+    defaultOptions.headers['Authorization'] = `Bearer ${authToken.token}`;
+  }
+  
+  try {
+    const response = await fetch(url, {
+      ...defaultOptions,
+      ...options,
+      headers: { ...defaultOptions.headers, ...options.headers },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    console.error('Gateway API Error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+const getErrorMessage = (error, defaultMessage = '서버 오류가 발생했습니다.') => {
+  if (typeof error === 'string') return error;
+  if (error?.message) return error.message;
+  return defaultMessage;
+};
+
+const copyToClipboard = async (text) => {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } else {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return true;
+    }
+  } catch (error) {
+    console.error('클립보드 복사 실패:', error);
+    return false;
+  }
+};
 import './Gateway.css';
 
 const AdminGateway = () => {

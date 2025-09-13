@@ -2,7 +2,6 @@
 // 경로: /api/gateway-auth.js
 
 import { createClient } from '@supabase/supabase-js';
-import { getEnvConfig } from '../utils/config.js';
 
 // Supabase 클라이언트 초기화
 const supabase = createClient(
@@ -43,8 +42,7 @@ export default async function handler(req, res) {
     console.log(`[Gateway Auth] Password attempt from ${clientIp}`);
 
     // 관리자 비밀번호 확인
-    const envConfig = getEnvConfig();
-    if (password === envConfig.adminPassword) {
+    if (password === process.env.GATEWAY_ADMIN_PASSWORD) {
       const sessionToken = generateSessionToken();
       
       await logAccess(clientIp, userAgent, 'admin', true, null, sessionToken);

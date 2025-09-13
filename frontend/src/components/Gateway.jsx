@@ -1,13 +1,101 @@
 import React, { useState, useEffect } from 'react';
-import { GATEWAY_CONFIG } from '../utils/config.js';
-import { 
-  gatewayFetch, 
-  saveAuthToken, 
-  getAuthToken, 
-  removeAuthToken,
-  getErrorMessage,
-  isAuthenticated 
-} from '../utils/gateway-utils.js';
+// Gateway 설정 (간소화된 버전)
+const GATEWAY_CONFIG = {
+  ui: {
+    title: '접근 인증 필요',
+    subtitle: '비밀번호를 입력해주세요',
+    tempPasswordPlaceholder: '비밀번호 입력',
+    loginButtonText: '입장하기',
+  },
+  messages: {
+    invalidPassword: '잘못된 비밀번호입니다.',
+    serverError: '서버 오류가 발생했습니다.',
+    networkError: '네트워크 연결을 확인해주세요.',
+  },
+  authTokenKey: 'gateway-auth-token',
+  sessionExpireMs: 24 * 60 * 60 * 1000, // 24시간
+};
+
+// 간소화된 유틸리티 함수들
+const saveAuthToken = (token, isAdmin = false) => {
+  if (typeof localStorage !== 'undefined') {
+    const authData = {
+      token,
+      isAdmin,
+      timestamp: Date.now(),
+      expiresAt: Date.now() + GATEWAY_CONFIG.sessionExpireMs
+    };
+    localStorage.setItem(GATEWAY_CONFIG.authTokenKey, JSON.stringify(authData));
+  }
+};
+
+const getAuthToken = () => {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const stored = localStorage.getItem(GATEWAY_CONFIG.authTokenKey);
+      if (stored) {
+        const authData = JSON.parse(stored);
+        if (Date.now() > authData.expiresAt) {
+          removeAuthToken();
+          return null;
+        }
+        return authData;
+      }
+    } catch (error) {
+      console.error('Auth token parse error:', error);
+      removeAuthToken();
+    }
+  }
+  return null;
+};
+
+const removeAuthToken = () => {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem(GATEWAY_CONFIG.authTokenKey);
+  }
+};
+
+const gatewayFetch = async (endpoint, options = {}) => {
+  const url = `/api${endpoint}`;
+  
+  const defaultOptions = {
+    headers: { 'Content-Type': 'application/json' },
+  };
+  
+  const authToken = getAuthToken();
+  if (authToken) {
+    defaultOptions.headers['Authorization'] = `Bearer ${authToken.token}`;
+  }
+  
+  try {
+    const response = await fetch(url, {
+      ...defaultOptions,
+      ...options,
+      headers: { ...defaultOptions.headers, ...options.headers },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    console.error('Gateway API Error:', error);
+    return { 
+      success: false, 
+      error: error.message,
+      networkError: error.name === 'TypeError' && error.message.includes('fetch')
+    };
+  }
+};
+
+const getErrorMessage = (error, defaultMessage = GATEWAY_CONFIG.messages.serverError) => {
+  if (typeof error === 'string') return error;
+  if (error?.networkError) return GATEWAY_CONFIG.messages.networkError;
+  if (error?.message) return error.message;
+  return defaultMessage;
+};
 import './Gateway.css';
 
 const Gateway = ({ children, onAuthenticated }) => {

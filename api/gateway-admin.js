@@ -2,8 +2,22 @@
 // 경로: /api/gateway-admin.js
 
 import { createClient } from '@supabase/supabase-js';
-import { getEnvConfig } from '../utils/config.js';
-import { generateRandomPassword, getExpiryDate } from '../utils/gateway-utils.js';
+
+// 간단한 유틸리티 함수들을 직접 구현
+const generateRandomPassword = (length = 8) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+const getExpiryDate = (hours = 24) => {
+  const expiry = new Date();
+  expiry.setHours(expiry.getHours() + hours);
+  return expiry;
+};
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
