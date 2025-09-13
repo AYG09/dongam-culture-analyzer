@@ -1,6 +1,4 @@
-// GET /api/spirits
-// FastAPI의 /api/spirits와 동일한 스키마({ spirits: [...] })를 반환합니다.
-// 서버리스 함수 폴더(api/data)의 JSON을 fs로 읽습니다(런타임 호환성 확보).
+// GET /api/spirits - 루트 라우트 버전 (단일 구현)
 import fs from 'fs/promises'
 import path from 'path'
 const DATA_PATH = path.join(process.cwd(), 'api', 'data', 'dongam_spirit.json')
@@ -24,17 +22,14 @@ async function loadSpirits() {
 }
 
 export default async function handler(req, res) {
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*')
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-    res.status(200).end()
-    return
-  }
-  if (req.method !== 'GET') {
-    res.status(405).json({ error: 'Method not allowed' })
-    return
-  }
+  // CORS
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+
+  if (req.method === 'OPTIONS') return res.status(200).end()
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
+
   try {
     const data = await loadSpirits()
     res.status(200).json(data)
