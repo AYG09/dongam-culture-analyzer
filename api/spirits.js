@@ -51,7 +51,7 @@ export default async function handler(req, res) {
     const data = await loadSpirits()
     res.status(200).json(data)
   } catch (error) {
-    console.error('Spirits API Error:', error)
+    console.error('Spirits API Error(single):', error)
     res.status(500).json({ spirits: [] })
   }
 }
