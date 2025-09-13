@@ -102,6 +102,8 @@ export default async function handler(req, res) {
 
         if (sessionId) {
           // 세션 삭제 (sessions 테이블에서 세션 코드로 삭제)
+          // ⚠️ 주의: sessionId는 sessions.code (TEST3 등)
+          //         gateway_access_logs.session_token과는 다름!
           if (!sessionId) {
             return res.status(400).json({ error: '세션 ID가 필요합니다.' })
           }
@@ -172,11 +174,14 @@ export default async function handler(req, res) {
 }
 
 // 세션 목록 조회 함수
+// ⚠️ 중요: sessions 테이블 = 실제 워크숍 세션 (TEST3 등)
+//         gateway_access_logs 테이블 = 로그인 기록 (완전히 다른 용도!)
 async function handleGetSessions(req, res, { search, page, limit }) {
   const offset = (parseInt(page) - 1) * parseInt(limit);
 
   try {
     // 실제 세션 데이터는 sessions 테이블에 있음!
+    // sessions.code가 TEST3 같은 실제 세션 코드
     let query = supabase
       .from('sessions')
       .select('*', { count: 'exact' })
