@@ -311,31 +311,39 @@ export default function Dashboard() {
         📈 종합 분석 및 인사이트
       </h2>
       
-      ${parsedResult.analysis?.ca_activity_value ? `
+      ${parsedResult.ca_theoretical_value ? `
         <div style="margin-bottom: 30px; padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #f8faff, #e3f2fd); border-left: 4px solid #007bff;">
           <h3 style="font-size: 18px; color: #1565c0; margin: 0 0 15px 0;">🎯 CA 활동의 이론적 가치</h3>
-          <div style="white-space: pre-line; line-height: 1.7;">${parsedResult.analysis.ca_activity_value}</div>
+          <div style="white-space: pre-line; line-height: 1.7;">${typeof parsedResult.ca_theoretical_value === 'object' 
+            ? Object.values(parsedResult.ca_theoretical_value).join('\\n\\n')
+            : parsedResult.ca_theoretical_value}</div>
         </div>
       ` : ''}
 
-      ${parsedResult.analysis?.leader_impact ? `
+      ${parsedResult.leader_effectiveness ? `
         <div style="margin-bottom: 30px; padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #f8fff9, #e8f5e8); border-left: 4px solid #28a745;">
           <h3 style="font-size: 18px; color: #1b5e20; margin: 0 0 15px 0;">👨‍💼 팀장 활동의 리더십 효과</h3>
-          <div style="white-space: pre-line; line-height: 1.7;">${parsedResult.analysis.leader_impact}</div>
+          <div style="white-space: pre-line; line-height: 1.7;">${typeof parsedResult.leader_effectiveness === 'object' 
+            ? Object.values(parsedResult.leader_effectiveness).join('\\n\\n')
+            : parsedResult.leader_effectiveness}</div>
         </div>
       ` : ''}
 
-      ${parsedResult.analysis?.overall_effects ? `
+      ${parsedResult.overall_culture_improvement ? `
         <div style="margin-bottom: 30px; padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #faf5ff, #f3e8ff); border-left: 4px solid #6f42c1;">
           <h3 style="font-size: 18px; color: #4c1d95; margin: 0 0 15px 0;">🌟 전반적인 조직문화 개선 효과</h3>
-          <div style="white-space: pre-line; line-height: 1.7;">${parsedResult.analysis.overall_effects}</div>
+          <div style="white-space: pre-line; line-height: 1.7;">${typeof parsedResult.overall_culture_improvement === 'object' 
+            ? Object.values(parsedResult.overall_culture_improvement).join('\\n\\n')
+            : parsedResult.overall_culture_improvement}</div>
         </div>
       ` : ''}
 
-      ${parsedResult.analysis?.key_insights ? `
+      ${parsedResult.key_insights ? `
         <div style="padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #fff7ed, #fed7aa); border-left: 4px solid #fd7e14;">
           <h3 style="font-size: 18px; color: #c2410c; margin: 0 0 15px 0;">💡 핵심 인사이트 및 제안</h3>
-          <div style="white-space: pre-line; line-height: 1.7;">${parsedResult.analysis.key_insights}</div>
+          <div style="white-space: pre-line; line-height: 1.7;">${typeof parsedResult.key_insights === 'object' 
+            ? Object.values(parsedResult.key_insights).join('\\n\\n')
+            : parsedResult.key_insights}</div>
         </div>
       ` : ''}
     `;
@@ -431,7 +439,6 @@ export default function Dashboard() {
   };
 
   const generateWordContent = () => {
-    const analysis = parsedResult.analysis || {};
     const affectedElements = parsedResult.affected_elements || [];
     
     return `
@@ -476,31 +483,47 @@ export default function Dashboard() {
         `).join('')}
     </div>
 
-    ${analysis.ca_activity_value ? `
+    ${parsedResult.ca_theoretical_value ? `
     <div class="section">
         <h2>🎯 Change Agent 활동의 이론적 가치</h2>
-        <div class="analysis-content">${convertNewlinesToHtml(analysis.ca_activity_value)}</div>
+        <div class="analysis-content">${convertNewlinesToHtml(
+          typeof parsedResult.ca_theoretical_value === 'object' 
+            ? Object.values(parsedResult.ca_theoretical_value).join('\n\n')
+            : parsedResult.ca_theoretical_value
+        )}</div>
     </div>
     ` : ''}
 
-    ${analysis.leader_impact ? `
+    ${parsedResult.leader_effectiveness ? `
     <div class="section">
         <h2>👨‍💼 팀장 활동의 리더십 효과</h2>
-        <div class="analysis-content">${convertNewlinesToHtml(analysis.leader_impact)}</div>
+        <div class="analysis-content">${convertNewlinesToHtml(
+          typeof parsedResult.leader_effectiveness === 'object' 
+            ? Object.values(parsedResult.leader_effectiveness).join('\n\n')
+            : parsedResult.leader_effectiveness
+        )}</div>
     </div>
     ` : ''}
 
-    ${analysis.overall_effects ? `
+    ${parsedResult.overall_culture_improvement ? `
     <div class="section">
         <h2>🌟 전반적인 조직문화 개선 효과</h2>
-        <div class="analysis-content">${convertNewlinesToHtml(analysis.overall_effects)}</div>
+        <div class="analysis-content">${convertNewlinesToHtml(
+          typeof parsedResult.overall_culture_improvement === 'object' 
+            ? Object.values(parsedResult.overall_culture_improvement).join('\n\n')
+            : parsedResult.overall_culture_improvement
+        )}</div>
     </div>
     ` : ''}
 
-    ${analysis.key_insights ? `
+    ${parsedResult.key_insights ? `
     <div class="section">
         <h2>💡 핵심 인사이트 및 제안</h2>
-        <div class="analysis-content">${convertNewlinesToHtml(analysis.key_insights)}</div>
+        <div class="analysis-content">${convertNewlinesToHtml(
+          typeof parsedResult.key_insights === 'object' 
+            ? Object.values(parsedResult.key_insights).join('\n\n')
+            : parsedResult.key_insights
+        )}</div>
     </div>
     ` : ''}
 
@@ -1015,14 +1038,34 @@ export default function Dashboard() {
                           "evidence": "팀장의 협력 문화 강조로 상생 마인드가 팀에 정착되었습니다."
                         }
                       ],
-                      "analysis": {
-                        "ca_activity_value": "**CA 활동의 조직문화 혁신 성과**\n\n• **소통 문화의 질적 전환**: CA가 주도한 '주기적 도전과제 대화 세션'은 단순한 업무 보고에서 벗어나 진정한 소통 문화로 전환시켰습니다. 기존 일방향적 소통에서 양방향 대화 문화로 패러다임이 변화했으며, 이는 팀원들의 참여도를 30% 이상 향상시켰습니다.\n\n• **신뢰 기반 조직문화 구축**: '감정표현 존중 및 피드백 문화 만들기' 활동을 통해 팀 내 심리적 안전감이 크게 증대되었습니다. 팀원들이 실패나 어려움을 숨기지 않고 공유하게 되면서, 문제 해결 속도가 40% 단축되었고 조직 학습 능력이 현저히 향상되었습니다.\n\n• **무형 자산의 가시적 변화**: CA의 지속적인 긍정적 마인드셋 전파로 '완벽주의 → 수용과 이해'로의 인식 전환이 일어났습니다. 이는 스트레스 감소(25% 개선)와 창의적 아이디어 제안 증가(60% 상승)로 이어져 조직의 혁신 역량을 크게 강화했습니다.",
-                        
-                        "leader_impact": "**팀장의 전략적 리더십과 시스템 혁신**\n\n• **위험 관리 체계의 체계화**: 팀장이 도입한 '수용가능한 위험성 범위 설정 및 과감한 도전' 시스템은 조직의 도전 문화를 안전하게 정착시켰습니다. 연 1개 프로젝트 목표 설정을 통해 무모한 도전이 아닌 계산된 혁신을 추진했으며, 이로 인해 프로젝트 성공률이 85%까지 향상되었습니다.\n\n• **권한 위임을 통한 조직 역량 강화**: '방향/실천방안 권한 부여'를 통해 팀원들의 자율성과 책임감을 동시에 증진시켰습니다. 의사결정 속도가 50% 빨라졌으며, 팀원들의 주인의식이 크게 향상되어 업무 만족도가 전반적으로 상승했습니다.\n\n• **성장 마인드셋 확산**: '성공사례 공유를 통한 자존감 제고' 활동으로 개인의 성취가 조직 전체의 학습 자산이 되는 선순환 구조를 만들었습니다. 팀원들의 자신감 지수가 평균 35% 향상되었고, 새로운 업무에 대한 도전 의욕이 크게 증가했습니다.",
-                        
-                        "overall_effects": "**조직문화 변혁의 종합적 성과와 지속가능성**\n\n• **협력 중심 조직문화로의 전환**: CA의 신뢰 구축 활동과 팀장의 권한 위임이 결합되어 진정한 협력 문화가 정착되었습니다. 부서 간 협업 프로젝트가 200% 증가했으며, 갈등 상황 해결 시간이 평균 60% 단축되었습니다.\n\n• **학습하는 조직으로의 진화**: '모든 경험은 배움'이라는 철학이 조직 전반에 스며들면서, 실패를 두려워하지 않는 혁신적 조직문화가 형성되었습니다. 신규 아이디어 제안이 월평균 15건에서 45건으로 증가했고, 그 중 실행률도 30%에서 65%로 크게 향상되었습니다.\n\n• **지속가능한 변화 동력 확보**: 일시적 변화가 아닌 내재적 동기와 시스템 기반의 변화로 정착되어, 6개월 후에도 개선 효과가 지속되고 있습니다. 조직 구성원들의 변화 피로도는 감소(40% 개선)하면서도 변화 수용도는 증가(55% 향상)하는 상반된 긍정적 결과를 보여주고 있습니다.",
-                        
-                        "key_insights": "**전략적 인사이트와 미래 발전 방향**\n\n🔥 **핵심 성공 요인 분석**:\n• **CA-팀장 협력 시너지**: CA의 '소프트 스킬' 중심 접근과 팀장의 '하드 시스템' 구축이 완벽한 상호보완을 이루어 1+1=3의 효과를 창출했습니다.\n• **단계적 변화 관리**: 개인 마인드셋 변화 → 팀 문화 정착 → 시스템 제도화의 3단계 접근으로 지속가능한 변화를 달성했습니다.\n• **측정 가능한 성과 지표**: 정성적 변화를 정량적으로 측정하여 변화의 실체를 명확히 입증했습니다.\n\n💡 **향후 발전 제안**:\n• **수평 확산**: 현재 팀의 성공 모델을 다른 팀/부서로 확산하여 조직 전체의 문화 혁신을 추진\n• **심화 단계**: 기본적인 신뢰 문화에서 한 단계 더 나아가 '창의적 갈등'을 활용한 혁신 문화로 진화\n• **외부 연계**: 고객, 협력업체와의 관계에서도 동일한 문화적 접근을 적용하여 생태계 차원의 변화 추진\n\n🎯 **ROI 분석**: 이번 문화 혁신 활동으로 인한 직간접적 효과는 연간 약 2.5억원의 가치 창출로 추정되며(생산성 향상 1.8억, 이직률 감소 0.4억, 혁신 아이디어 실행 0.3억), 투입 비용 대비 약 8:1의 높은 투자 수익률을 보여주고 있습니다."
+                      "ca_theoretical_value": {
+                        "communication_transformation": "CA가 주도한 '주기적 도전과제 대화 세션'은 단순한 업무 보고에서 벗어나 진정한 소통 문화로 전환시켰습니다. 기존 일방향적 소통에서 양방향 대화 문화로 패러다임이 변화했으며, 이는 팀원들의 참여도를 30% 이상 향상시켰습니다.",
+                        "trust_building": "'감정표현 존중 및 피드백 문화 만들기' 활동을 통해 팀 내 심리적 안전감이 크게 증대되었습니다. 팀원들이 실패나 어려움을 숨기지 않고 공유하게 되면서, 문제 해결 속도가 40% 단축되었고 조직 학습 능력이 현저히 향상되었습니다.",
+                        "intangible_assets": "CA의 지속적인 긍정적 마인드셋 전파로 '완벽주의 → 수용과 이해'로의 인식 전환이 일어났습니다. 이는 스트레스 감소(25% 개선)와 창의적 아이디어 제안 증가(60% 상승)로 이어져 조직의 혁신 역량을 크게 강화했습니다."
+                      },
+                      "leader_effectiveness": {
+                        "risk_management": "팀장이 도입한 '수용가능한 위험성 범위 설정 및 과감한 도전' 시스템은 조직의 도전 문화를 안전하게 정착시켰습니다. 연 1개 프로젝트 목표 설정을 통해 무모한 도전이 아닌 계산된 혁신을 추진했으며, 이로 인해 프로젝트 성공률이 85%까지 향상되었습니다.",
+                        "empowerment": "'방향/실천방안 권한 부여'를 통해 팀원들의 자율성과 책임감을 동시에 증진시켰습니다. 의사결정 속도가 50% 빨라졌으며, 팀원들의 주인의식이 크게 향상되어 업무 만족도가 전반적으로 상승했습니다.",
+                        "growth_mindset": "'성공사례 공유를 통한 자존감 제고' 활동으로 개인의 성취가 조직 전체의 학습 자산이 되는 선순환 구조를 만들었습니다. 팀원들의 자신감 지수가 평균 35% 향상되었고, 새로운 업무에 대한 도전 의욕이 크게 증가했습니다."
+                      },
+                      "overall_culture_improvement": {
+                        "collaboration": "CA의 신뢰 구축 활동과 팀장의 권한 위임이 결합되어 진정한 협력 문화가 정착되었습니다. 부서 간 협업 프로젝트가 200% 증가했으며, 갈등 상황 해결 시간이 평균 60% 단축되었습니다.",
+                        "learning_organization": "'모든 경험은 배움'이라는 철학이 조직 전반에 스며들면서, 실패를 두려워하지 않는 혁신적 조직문화가 형성되었습니다. 신규 아이디어 제안이 월평균 15건에서 45건으로 증가했고, 그 중 실행률도 30%에서 65%로 크게 향상되었습니다.",
+                        "sustainability": "일시적 변화가 아닌 내재적 동기와 시스템 기반의 변화로 정착되어, 6개월 후에도 개선 효과가 지속되고 있습니다. 조직 구성원들의 변화 피로도는 감소(40% 개선)하면서도 변화 수용도는 증가(55% 향상)하는 상반된 긍정적 결과를 보여주고 있습니다."
+                      },
+                      "key_insights": {
+                        "success_factors": "CA의 '소프트 스킬' 중심 접근과 팀장의 '하드 시스템' 구축이 완벽한 상호보완을 이루어 1+1=3의 효과를 창출했습니다. 단계적 변화 관리와 측정 가능한 성과 지표 활용이 핵심 성공 요인이었습니다.",
+                        "ca_motivation_message": "당신의 끊임없는 소통 노력과 긍정적 마인드셋 전파가 팀 전체의 변화를 이끌어냈습니다. 작은 대화 하나하나가 모여 큰 문화적 변화를 만들어낸 것은 정말 놀라운 성과입니다. 앞으로도 이런 변화의 씨앗을 계속 뿌려나가시길 응원합니다.",
+                        "leader_guidance_message": "체계적인 위험 관리와 권한 위임을 통해 안전하면서도 도전적인 조직문화를 만들어내신 리더십이 인상적입니다. 팀원들의 성장을 지켜보며 적절한 때에 권한을 위임하시는 균형감각이 조직의 지속적 발전을 가능하게 했습니다.",
+                        "future_recommendations": "현재 팀의 성공 모델을 다른 팀/부서로 확산하고, 기본 신뢰 문화에서 창의적 갈등을 활용한 혁신 문화로 진화시키며, 고객과 협력업체와의 관계에서도 동일한 문화적 접근을 적용하여 생태계 차원의 변화를 추진해보세요."
+                      },
+                      "analysis_summary": {
+                        "total_elements": 9,
+                        "ca_contributions": 4,
+                        "leader_contributions": 5,
+                        "high_impact": 4,
+                        "medium_impact": 4,
+                        "low_impact": 1
                       }
                     }, null, 2);
                     setLlmResult(sampleData);
@@ -1057,11 +1100,11 @@ export default function Dashboard() {
               </div>
               
               {/* LLM 분석 결과 표시 패널 */}
-              {parsedResult?.analysis && (
+              {parsedResult && (parsedResult.ca_theoretical_value || parsedResult.leader_effectiveness || parsedResult.overall_culture_improvement || parsedResult.key_insights) && (
                 <div id="analysis-result-panel" className="card" style={{ marginBottom: 20, background: '#f8f9fa', borderColor: '#e9ecef' }}>
                 <h4 style={{ marginBottom: 16, color: '#495057' }}>📊 활동 성과 및 효과성 분석</h4>
                 
-                {parsedResult.analysis.ca_activity_value && (
+                {parsedResult.ca_theoretical_value && (
                   <div style={{ marginBottom: 12 }}>
                     <h5 style={{ color: '#007bff', marginBottom: 8 }}>🎯 CA 활동의 이론적 가치</h5>
                     <div style={{ 
@@ -1071,12 +1114,14 @@ export default function Dashboard() {
                       fontSize: '14px',
                       color: '#495057'
                     }}>
-                      {parsedResult.analysis.ca_activity_value}
+                      {typeof parsedResult.ca_theoretical_value === 'object' 
+                        ? Object.values(parsedResult.ca_theoretical_value).join('\n\n')
+                        : parsedResult.ca_theoretical_value}
                     </div>
                   </div>
                 )}
                 
-                {parsedResult.analysis.leader_impact && (
+                {parsedResult.leader_effectiveness && (
                   <div style={{ marginBottom: 12 }}>
                     <h5 style={{ color: '#28a745', marginBottom: 8 }}>👨‍💼 팀장 활동의 리더십 효과</h5>
                     <div style={{ 
@@ -1086,12 +1131,14 @@ export default function Dashboard() {
                       fontSize: '14px',
                       color: '#495057'
                     }}>
-                      {parsedResult.analysis.leader_impact}
+                      {typeof parsedResult.leader_effectiveness === 'object' 
+                        ? Object.values(parsedResult.leader_effectiveness).join('\n\n')
+                        : parsedResult.leader_effectiveness}
                     </div>
                   </div>
                 )}
                 
-                {parsedResult.analysis.overall_effects && (
+                {parsedResult.overall_culture_improvement && (
                   <div style={{ marginBottom: 12 }}>
                     <h5 style={{ color: '#6f42c1', marginBottom: 8 }}>🌟 전반적인 조직문화 개선 효과</h5>
                     <div style={{ 
@@ -1101,12 +1148,14 @@ export default function Dashboard() {
                       fontSize: '14px',
                       color: '#495057'
                     }}>
-                      {parsedResult.analysis.overall_effects}
+                      {typeof parsedResult.overall_culture_improvement === 'object' 
+                        ? Object.values(parsedResult.overall_culture_improvement).join('\n\n')
+                        : parsedResult.overall_culture_improvement}
                     </div>
                   </div>
                 )}
                 
-                {parsedResult.analysis.key_insights && (
+                {parsedResult.key_insights && (
                   <div>
                     <h5 style={{ color: '#fd7e14', marginBottom: 8 }}>💡 핵심 인사이트 및 제안</h5>
                     <div style={{ 
@@ -1116,7 +1165,9 @@ export default function Dashboard() {
                       fontSize: '14px',
                       color: '#495057'
                     }}>
-                      {parsedResult.analysis.key_insights}
+                      {typeof parsedResult.key_insights === 'object' 
+                        ? Object.values(parsedResult.key_insights).join('\n\n')
+                        : parsedResult.key_insights}
                     </div>
                   </div>
                 )}
