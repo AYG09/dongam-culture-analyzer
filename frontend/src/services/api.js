@@ -2,9 +2,7 @@ import axios from 'axios';
 import { createClient } from '@supabase/supabase-js'
 
 // Vercel 환경에서는 상대 경로 사용, 로컬에서는 기존 방식 유지
-const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://127.0.0.1:65432/api'  // 로컬 개발
-  : '/api';  // Vercel Functions (프로덕션)
+const API_BASE = '/api';
 
 const api = axios.create({ baseURL: API_BASE, timeout: 15000 });
 

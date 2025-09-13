@@ -2,9 +2,7 @@
 import axios from 'axios';
 
 // Vercel 환경에서는 상대 경로 사용
-const API_BASE = process.env.NODE_ENV === 'production' 
-  ? '/api'  // Vercel Functions
-  : 'http://127.0.0.1:65432/api';  // 로컬 개발
+const API_BASE = '/api';
 
 const api = axios.create({ baseURL: API_BASE, timeout: 15000 });
 

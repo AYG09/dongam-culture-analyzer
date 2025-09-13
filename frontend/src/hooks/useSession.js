@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getApiUrl } from '../utils/networkUtils';
 
-let dynamicApiBase = import.meta.env.VITE_dynamicApiBase_URL || 'http://localhost:65432/api';
+let dynamicApiBase = import.meta.env.VITE_dynamicApiBase_URL || '/api';
 
 // 동적 API URL 초기화
 async function initializeDynamicApi() {

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useContext, createContext, useEffect } from 'react';
 import { getApiUrl } from '../utils/networkUtils';
 
-let dynamicApiBase = import.meta.env.VITE_dynamicApiBase_URL || 'http://localhost:65432/api';
+let dynamicApiBase = import.meta.env.VITE_dynamicApiBase_URL || '/api';
 
 async function initializeDynamicApi() {
   try {

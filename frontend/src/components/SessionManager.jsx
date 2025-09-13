@@ -14,7 +14,7 @@ export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [apiBase, setApiBase] = useState(import.meta.env.VITE_API_BASE_URL || 'http://localhost:65432/api');
+  const [apiBase, setApiBase] = useState(import.meta.env.VITE_API_BASE_URL || '/api');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showGatewayPanel, setShowGatewayPanel] = useState(false);
