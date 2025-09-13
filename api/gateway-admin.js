@@ -180,7 +180,7 @@ async function handleGetSessions(req, res, { search, page, limit }) {
       .from('gateway_access_logs')
       .select('*', { count: 'exact' })
       .eq('success', true)
-      .order('timestamp', { ascending: false });
+      .order('created_at', { ascending: false });
 
     // 검색 기능 - IP 주소, User Agent에서 검색
     if (search && search.trim()) {

@@ -600,8 +600,9 @@ const AdminGateway = () => {
                     
                     <div className="session-details">
                       <div className="meta-info">
-                        <span>로그인: {new Date(session.timestamp).toLocaleString()}</span>
-                        <span>사용자: {session.password_used}</span>
+                        <span>로그인: {new Date(session.created_at).toLocaleString()}</span>
+                        <span>비밀번호: {session.password_used}</span>
+                        <span>타입: {session.password_type}</span>
                         <span>성공: {session.success ? '✅' : '❌'}</span>
                       </div>
                       {session.user_agent && (

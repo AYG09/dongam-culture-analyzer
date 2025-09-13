@@ -29,14 +29,18 @@ export default async function handler(req, res) {
       })
     }
 
-    // 관리자 비밀번호 확인
+        // 관리자 비밀번호 확인
     if (password === process.env.GATEWAY_ADMIN_PASSWORD) {
+      const sessionToken = generateToken()
+      
+      // 로그인 기록 저장
+      await logAccess(clientIp, req.headers['user-agent'], 'admin', password, true, null, sessionToken)
+      
       return res.status(200).json({
         success: true,
         isAdmin: true,
-        sessionToken: generateToken(),
-        message: '관리자로 로그인되었습니다.',
-        expiresAt: Date.now() + 24 * 60 * 60 * 1000
+        sessionToken,
+        message: '관리자로 로그인되었습니다.'
       })
     }
 
@@ -49,6 +53,7 @@ export default async function handler(req, res) {
       .single()
 
     if (error || !data) {
+      await logAccess(clientIp, req.headers['user-agent'], 'unknown', password, false, '잘못된 비밀번호', null)
       return res.status(401).json({
         success: false,
         error: '잘못된 비밀번호입니다.'
@@ -57,6 +62,7 @@ export default async function handler(req, res) {
 
     // 만료 확인
     if (new Date() > new Date(data.expires_at)) {
+      await logAccess(clientIp, req.headers['user-agent'], 'temp', password, false, '만료된 비밀번호', null)
       return res.status(401).json({
         success: false,
         error: '만료된 비밀번호입니다.'
@@ -73,16 +79,22 @@ export default async function handler(req, res) {
       })
       .eq('id', data.id)
 
+    const sessionToken = generateToken()
+    
+    // 로그인 기록 저장
+    await logAccess(clientIp, req.headers['user-agent'], 'temp', password, true, null, sessionToken)
+
     return res.status(200).json({
       success: true,
       isAdmin: false,
-      sessionToken: generateToken(),
+      sessionToken,
       message: '임시 비밀번호로 로그인되었습니다.',
       expiresAt: new Date(data.expires_at).getTime()
     })
 
   } catch (error) {
     console.error('Gateway auth error:', error)
+    await logAccess(clientIp, req.headers['user-agent'], 'error', password, false, error.message, null)
     return res.status(500).json({
       success: false,
       error: '서버 오류가 발생했습니다.'
@@ -92,4 +104,24 @@ export default async function handler(req, res) {
 
 function generateToken() {
   return 'gw_' + Date.now() + '_' + Math.random().toString(36).substring(2)
+}
+
+// 접근 로그 저장 함수
+async function logAccess(ipAddress, userAgent, passwordType, passwordUsed, success, failureReason, sessionToken) {
+  try {
+    await supabase
+      .from('gateway_access_logs')
+      .insert({
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        password_type: passwordType,
+        password_used: passwordUsed,
+        success: success,
+        failure_reason: failureReason,
+        session_token: sessionToken,
+        metadata: {}
+      })
+  } catch (error) {
+    console.error('Failed to log access:', error)
+  }
 }
