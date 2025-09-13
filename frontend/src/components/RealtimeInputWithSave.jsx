@@ -11,6 +11,7 @@ export const RealtimeInputWithSave = ({
   onChange,
   ...props 
 }) => {
+  console.log(`[COMPONENT MOUNT] RealtimeInputWithSave fieldId: ${fieldId}, sessionCode: ${sessionCode}`);
   const [localValue, setLocalValue] = useState(externalValue);
   const [originalValue, setOriginalValue] = useState(externalValue);
   const [isEditing, setIsEditing] = useState(false);
@@ -175,7 +176,10 @@ export const RealtimeInputWithSave = ({
         {!isEditing ? (
           <button 
             className="edit-button"
-            onClick={handleStartEdit}
+            onClick={() => {
+              console.log(`[BUTTON CLICK] Edit button clicked for fieldId: ${fieldId}`);
+              handleStartEdit();
+            }}
           >
             편집
           </button>
