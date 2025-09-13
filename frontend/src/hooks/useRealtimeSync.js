@@ -12,9 +12,20 @@ async function initializeRealtimeApi() {
   }
 }
 
-// 고유 사용자 ID 생성
-function generateUserId() {
-  return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+// 고정 사용자 ID 가져오기 (localStorage에 영속화)
+function getStableUserId() {
+  try {
+    const KEY = 'kd_userId';
+    let id = localStorage.getItem(KEY);
+    if (!id) {
+      id = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  } catch {
+    // SSR/프라이버시 모드 등 예외 시 임시 ID로 대체
+    return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
 }
 
 export const useRealtimeSync = (sessionCode) => {
@@ -24,7 +35,7 @@ export const useRealtimeSync = (sessionCode) => {
   const [lastUpdate, setLastUpdate] = useState(0);
 
   // 참조들 (stale-closure 방지)
-  const userIdRef = useRef(generateUserId());
+  const userIdRef = useRef(getStableUserId());
   const sessionCodeRef = useRef(sessionCode);
   const lastUpdateRef = useRef(0);
   const lockTimeouts = useRef({});

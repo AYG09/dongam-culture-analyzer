@@ -51,12 +51,8 @@ export const RealtimeInputWithSave = ({
 
   // 편집 시작
   const handleStartEdit = async () => {
-    if (isFieldLocked(fieldId) && !isFieldLockedByMe(fieldId)) {
-      alert('다른 사용자가 편집 중입니다.');
-      return;
-    }
-    
     try {
+      // 서버에 잠금 시도를 위임 (만료 락/자기 락 정리 포함)
       const success = await lockField(fieldId);
       if (success) {
         setIsEditing(true);
@@ -177,7 +173,6 @@ export const RealtimeInputWithSave = ({
           <button 
             className="edit-button"
             onClick={handleStartEdit}
-            disabled={lockedByOther}
           >
             편집
           </button>
