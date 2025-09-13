@@ -105,13 +105,25 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Gateway auth error:', error)
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      actualPassword,
+      clientIp,
+      envCheck: {
+        hasSupabaseUrl: !!process.env.SUPABASE_URL,
+        hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
+        hasAdminPassword: !!process.env.GATEWAY_ADMIN_PASSWORD
+      }
+    })
     // TODO: 로그인 기록 저장 (테이블 생성 후 활성화)
     // logAccess(clientIp, req.headers['user-agent'], 'error', actualPassword || 'unknown', false, error.message, null).catch(err => {
     //   console.error('Error log failed:', err)
     // })
     return res.status(500).json({
       success: false,
-      error: '서버 오류가 발생했습니다.'
+      error: '서버 오류가 발생했습니다.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     })
   }
 }
