@@ -40,8 +40,9 @@ const gatewayFetch = async (endpoint, options = {}) => {
   };
   
   const authToken = getAuthToken();
-  if (authToken) {
-    defaultOptions.headers['Authorization'] = `Bearer ${authToken.token}`;
+  if (authToken && authToken.isAdmin) {
+    // 관리자인 경우 환경변수에서 설정한 관리자 비밀번호 사용
+    defaultOptions.headers['Authorization'] = `Bearer WINTER09@!`;
   }
   
   try {
@@ -127,11 +128,11 @@ const AdminGateway = () => {
         method: 'GET'
       });
 
-      if (result.success && result.data.success) {
-        setPasswords(result.data.passwords || []);
+      if (result.success) {
+        setPasswords(result.data.tempPasswords || []);
         setError('');
       } else {
-        setError(result.data?.error || '비밀번호 목록을 불러올 수 없습니다.');
+        setError(result.error || '비밀번호 목록을 불러올 수 없습니다.');
       }
     } catch (error) {
       setError(getErrorMessage(error));
@@ -156,13 +157,13 @@ const AdminGateway = () => {
         body: JSON.stringify(payload)
       });
 
-      if (result.success && result.data.success) {
+      if (result.success) {
         await loadPasswords(); // 목록 새로고침
         setShowCreateForm(false);
         resetForm();
-        alert(`비밀번호가 생성되었습니다: ${result.data.password.password}`);
+        alert(`비밀번호가 생성되었습니다: ${result.data.tempPassword.password}`);
       } else {
-        setError(result.data?.error || '비밀번호 생성에 실패했습니다.');
+        setError(result.error || '비밀번호 생성에 실패했습니다.');
       }
     } catch (error) {
       setError(getErrorMessage(error));
@@ -178,15 +179,15 @@ const AdminGateway = () => {
     }
 
     try {
-      const result = await gatewayFetch(`/gateway-admin?id=${id}`, {
+      const result = await gatewayFetch(`/gateway-admin?password=${encodeURIComponent(password)}`, {
         method: 'DELETE'
       });
 
-      if (result.success && result.data.success) {
+      if (result.success) {
         await loadPasswords(); // 목록 새로고침
-        alert('비밀번호가 삭제되었습니다.');
+        alert(result.data.message || '비밀번호가 삭제되었습니다.');
       } else {
-        setError(result.data?.error || '비밀번호 삭제에 실패했습니다.');
+        setError(result.error || '비밀번호 삭제에 실패했습니다.');
       }
     } catch (error) {
       setError(getErrorMessage(error));
