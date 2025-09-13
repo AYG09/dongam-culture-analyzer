@@ -209,6 +209,7 @@ export const useRealtimeSync = (sessionCode) => {
   // 필드 값 업데이트
   const updateFieldValue = useCallback(async (fieldId, value) => {
     if (!sessionCodeRef.current) return false;
+    console.log(`[UPDATE REQUEST] fieldId: ${fieldId}, value: "${value}", userId: ${userIdRef.current}, sessionCode: ${sessionCodeRef.current}`);
     try {
       const response = await fetch(`${dynamicApiBase}/fields/update`, {
         method: 'POST',
@@ -221,6 +222,7 @@ export const useRealtimeSync = (sessionCode) => {
         }),
       });
       const result = await response.json();
+      console.log(`[UPDATE RESPONSE] status: ${response.status}, result: ${JSON.stringify(result)}`);
       if (result.success) {
         // 사용자 입력 시 즉시 빠른 폴링으로 전환하고 트리거
         backoffMsRef.current = MIN_BACKOFF;
@@ -230,7 +232,7 @@ export const useRealtimeSync = (sessionCode) => {
       }
       return result.success;
     } catch (error) {
-      console.error('Failed to update field:', error);
+      console.error('[UPDATE ERROR] Failed to update field:', error);
       return false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

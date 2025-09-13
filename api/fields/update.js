@@ -37,17 +37,52 @@ export default async function handler(req, res) {
       }
     }
 
-    const { error } = await supabase
+    // UPDATE → INSERT 패턴으로 duplicate key 오류 방지
+    const updateData = {
+      user_id: userId,
+      value: value || '',
+      updated_at: new Date().toISOString()
+    }
+    console.log(`[UPDATE API] Attempting to update field: sessionCode=${sessionCode}, fieldId=${fieldId}, userId=${userId}`)
+
+    const { data: updateResult, error: updateError } = await supabase
       .from('field_states')
-      .upsert({
+      .update(updateData)
+      .eq('session_code', sessionCode)
+      .eq('field_id', fieldId)
+      .select()
+
+    if (updateError) {
+      console.error('[UPDATE API] Update error:', updateError)
+      throw updateError
+    }
+
+    if (updateResult && updateResult.length > 0) {
+      console.log(`[UPDATE API] Updated existing record:`, updateResult)
+    } else {
+      // 레코드가 없으면 INSERT
+      console.log(`[UPDATE API] No existing record, inserting new one`)
+      const insertData = {
         session_code: sessionCode,
         field_id: fieldId,
         user_id: userId,
         value: value || '',
         updated_at: new Date().toISOString()
-      })
+      }
+      
+      const { data: insertResult, error: insertError } = await supabase
+        .from('field_states')
+        .insert(insertData)
+        .select()
 
-    if (error) throw error
+      if (insertError) {
+        console.error('[UPDATE API] Insert error:', insertError)
+        throw insertError
+      }
+      console.log(`[UPDATE API] Inserted new record:`, insertResult)
+    }
+
+    console.log(`[UPDATE API] Field update completed successfully`)
     return res.status(200).json({ success: true, message: 'Field updated' })
   } catch (error) {
     console.error('Update field error:', error)
