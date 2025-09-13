@@ -7,6 +7,22 @@ const CultureMapCardView = ({ analysisData, sessionCode, selectedSpirit }) => {
   const [activityFilter, setActivityFilter] = useState('all'); // 'all', 'ca', 'leader'
   const [contributionFilter, setContributionFilter] = useState('all'); // 'all', 'high', 'medium', 'low'
   const [factorTypeFilter, setFactorTypeFilter] = useState('all'); // 'all', 'tangible', 'intangible'
+  const [expandedSections, setExpandedSections] = useState({
+    affected_elements: true,
+    ca_theoretical_value: false,
+    leader_effectiveness: false,
+    overall_culture_improvement: false,
+    key_insights: false,
+    analysis_summary: false
+  });
+
+  // 섹션 토글 함수
+  const toggleSection = (sectionName) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionName]: !prev[sectionName]
+    }));
+  };
 
   // 테스트용 샘플 분석 결과 데이터 (실제 분석 결과가 없을 때 사용)
   const getSampleAnalysisData = () => {
@@ -349,24 +365,44 @@ const CultureMapCardView = ({ analysisData, sessionCode, selectedSpirit }) => {
 
   // selectedSpirit의 요소로 동적 카드 데이터 구성 (가능하면), 없으면 폴백 사용
   const cultureMapData = useMemo(() => {
+    const behaviors = selectedSpirit?.behaviors || [];
     const tang = selectedSpirit?.tangible_elements || [];
     const intang = selectedSpirit?.intangible_elements || [];
-    const hasDynamic = (Array.isArray(tang) && tang.length > 0) || (Array.isArray(intang) && intang.length > 0);
+    const hasDynamic = (Array.isArray(behaviors) && behaviors.length > 0) || 
+                      (Array.isArray(tang) && tang.length > 0) || 
+                      (Array.isArray(intang) && intang.length > 0);
     if (!hasDynamic) return fallbackCultureMapData;
 
     const cards = [];
-    // 무형 요소 → Layer 4
-    intang.forEach((el) => {
+    
+    // 결과 → Layer 1 (동암정신 이름)
+    if (selectedSpirit?.name) {
+      cards.push({
+        id: '결과_1',
+        text: selectedSpirit.name,
+        position: { x: 650, y: 20 },
+        width: 200,
+        height: 60,
+        type: '결과',
+        layer: 1,
+        connections: behaviors.map(b => normalizeElementId(b.id)).filter(id => id !== '행동1'), // 제목 제외
+      });
+    }
+
+    // 행동 요소 → Layer 2
+    behaviors.forEach((el) => {
       const id = normalizeElementId(el.id);
+      if (id === '행동1') return; // 제목 스킵
+      const conns = Array.isArray(el.connected_elements) ? el.connected_elements.map(normalizeElementId) : [];
       cards.push({
         id,
         text: el.name,
         position: { x: 0, y: 0 },
-        width: 150,
-        height: 140,
-        type: '무형',
-        layer: 4,
-        connections: [],
+        width: 180,
+        height: 100,
+        type: '행동',
+        layer: 2,
+        connections: conns,
       });
     });
 
@@ -383,6 +419,21 @@ const CultureMapCardView = ({ analysisData, sessionCode, selectedSpirit }) => {
         type: '유형',
         layer: 3,
         connections: conns,
+      });
+    });
+
+    // 무형 요소 → Layer 4
+    intang.forEach((el) => {
+      const id = normalizeElementId(el.id);
+      cards.push({
+        id,
+        text: el.name,
+        position: { x: 0, y: 0 },
+        width: 150,
+        height: 140,
+        type: '무형',
+        layer: 4,
+        connections: [],
       });
     });
 
@@ -1689,6 +1740,307 @@ const CultureMapCardView = ({ analysisData, sessionCode, selectedSpirit }) => {
                   }
                 </div>
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 확장된 분석 결과 섹션들 */}
+      {analysisData && (
+        <div style={{ marginTop: '40px' }}>
+          <h2 style={{ 
+            color: '#2c3e50', 
+            marginBottom: '30px',
+            borderBottom: '2px solid #3498db',
+            paddingBottom: '10px'
+          }}>
+            📊 종합 분석 보고서
+          </h2>
+
+          {/* Change Agent 활동의 이론적 가치 */}
+          {analysisData.ca_theoretical_value && (
+            <div style={{ marginBottom: '30px' }}>
+              <div 
+                onClick={() => toggleSection('ca_theoretical_value')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  padding: '12px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  borderRadius: '8px',
+                  marginBottom: '10px'
+                }}
+              >
+                <span>{expandedSections.ca_theoretical_value ? '🔽' : '▶️'}</span>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>🎯 Change Agent 활동의 이론적 가치</h3>
+              </div>
+              {expandedSections.ca_theoretical_value && (
+                <div style={{
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid #007bff',
+                  borderRadius: '8px',
+                  padding: '20px'
+                }}>
+                  {Object.entries(analysisData.ca_theoretical_value).map(([key, value]) => (
+                    <div key={key} style={{ marginBottom: '15px' }}>
+                      <h4 style={{ 
+                        color: '#007bff', 
+                        marginBottom: '8px',
+                        fontSize: '16px'
+                      }}>
+                        {key === 'communication_transformation' ? '• 소통 문화의 질적 전환' :
+                         key === 'trust_building' ? '• 신뢰 기반 조직문화 구축' :
+                         key === 'intangible_assets' ? '• 무형 자산의 가시적 변화' : key}
+                      </h4>
+                      <p style={{ 
+                        color: '#495057', 
+                        lineHeight: 1.6,
+                        margin: 0,
+                        paddingLeft: '16px'
+                      }}>
+                        {value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 팀장 활동의 리더십 효과 */}
+          {analysisData.leader_effectiveness && (
+            <div style={{ marginBottom: '30px' }}>
+              <div 
+                onClick={() => toggleSection('leader_effectiveness')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  padding: '12px',
+                  backgroundColor: '#6f42c1',
+                  color: 'white',
+                  borderRadius: '8px',
+                  marginBottom: '10px'
+                }}
+              >
+                <span>{expandedSections.leader_effectiveness ? '🔽' : '▶️'}</span>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>👨‍💼 팀장 활동의 리더십 효과</h3>
+              </div>
+              {expandedSections.leader_effectiveness && (
+                <div style={{
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid #6f42c1',
+                  borderRadius: '8px',
+                  padding: '20px'
+                }}>
+                  {Object.entries(analysisData.leader_effectiveness).map(([key, value]) => (
+                    <div key={key} style={{ marginBottom: '15px' }}>
+                      <h4 style={{ 
+                        color: '#6f42c1', 
+                        marginBottom: '8px',
+                        fontSize: '16px'
+                      }}>
+                        {key === 'risk_management' ? '• 위험 관리 체계의 체계화' :
+                         key === 'empowerment' ? '• 권한 위임을 통한 조직 역량 강화' :
+                         key === 'growth_mindset' ? '• 성장 마인드셋 확산' : key}
+                      </h4>
+                      <p style={{ 
+                        color: '#495057', 
+                        lineHeight: 1.6,
+                        margin: 0,
+                        paddingLeft: '16px'
+                      }}>
+                        {value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 전반적인 조직문화 개선 효과 */}
+          {analysisData.overall_culture_improvement && (
+            <div style={{ marginBottom: '30px' }}>
+              <div 
+                onClick={() => toggleSection('overall_culture_improvement')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  padding: '12px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  borderRadius: '8px',
+                  marginBottom: '10px'
+                }}
+              >
+                <span>{expandedSections.overall_culture_improvement ? '🔽' : '▶️'}</span>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>🌟 전반적인 조직문화 개선 효과</h3>
+              </div>
+              {expandedSections.overall_culture_improvement && (
+                <div style={{
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid #28a745',
+                  borderRadius: '8px',
+                  padding: '20px'
+                }}>
+                  {Object.entries(analysisData.overall_culture_improvement).map(([key, value]) => (
+                    <div key={key} style={{ marginBottom: '15px' }}>
+                      <h4 style={{ 
+                        color: '#28a745', 
+                        marginBottom: '8px',
+                        fontSize: '16px'
+                      }}>
+                        {key === 'collaboration' ? '• 협력 중심 조직문화로의 전환' :
+                         key === 'learning_organization' ? '• 학습하는 조직으로의 진화' :
+                         key === 'sustainability' ? '• 지속가능한 변화 동력 확보' : key}
+                      </h4>
+                      <p style={{ 
+                        color: '#495057', 
+                        lineHeight: 1.6,
+                        margin: 0,
+                        paddingLeft: '16px'
+                      }}>
+                        {value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 핵심 인사이트 및 제안 */}
+          {analysisData.key_insights && (
+            <div style={{ marginBottom: '30px' }}>
+              <div 
+                onClick={() => toggleSection('key_insights')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  padding: '12px',
+                  backgroundColor: '#fd7e14',
+                  color: 'white',
+                  borderRadius: '8px',
+                  marginBottom: '10px'
+                }}
+              >
+                <span>{expandedSections.key_insights ? '🔽' : '▶️'}</span>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>💡 핵심 인사이트 및 제안</h3>
+              </div>
+              {expandedSections.key_insights && (
+                <div style={{
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid #fd7e14',
+                  borderRadius: '8px',
+                  padding: '20px'
+                }}>
+                  {Object.entries(analysisData.key_insights).map(([key, value]) => (
+                    <div key={key} style={{ marginBottom: '15px' }}>
+                      <h4 style={{ 
+                        color: '#fd7e14', 
+                        marginBottom: '8px',
+                        fontSize: '16px'
+                      }}>
+                        {key === 'success_factors' ? '🔥 핵심 성공 요인 분석' :
+                         key === 'ca_motivation_message' ? '� Change Agent에게 전하는 격려 메시지' :
+                         key === 'leader_guidance_message' ? '🎯 팀장에게 전하는 조언과 응원' :
+                         key === 'future_recommendations' ? '💡 향후 발전 제안' : key}
+                      </h4>
+                      <p style={{ 
+                        color: '#495057', 
+                        lineHeight: 1.6,
+                        margin: 0,
+                        paddingLeft: '16px'
+                      }}>
+                        {value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 분석 요약 */}
+          {analysisData.analysis_summary && (
+            <div style={{ marginBottom: '30px' }}>
+              <div 
+                onClick={() => toggleSection('analysis_summary')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  padding: '12px',
+                  backgroundColor: '#17a2b8',
+                  color: 'white',
+                  borderRadius: '8px',
+                  marginBottom: '10px'
+                }}
+              >
+                <span>{expandedSections.analysis_summary ? '🔽' : '▶️'}</span>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>📊 분석 요약</h3>
+              </div>
+              {expandedSections.analysis_summary && (
+                <div style={{
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid #17a2b8',
+                  borderRadius: '8px',
+                  padding: '20px'
+                }}>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '15px'
+                  }}>
+                    <div style={{ textAlign: 'center', padding: '15px', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                      <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#17a2b8' }}>
+                        {analysisData.analysis_summary.total_elements || 0}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>총 분석 요소</div>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '15px', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                      <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#007bff' }}>
+                        {analysisData.analysis_summary.ca_contributions || 0}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>CA 기여 요소</div>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '15px', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                      <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#6f42c1' }}>
+                        {analysisData.analysis_summary.leader_contributions || 0}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>팀장 기여 요소</div>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '15px', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                      <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc3545' }}>
+                        {analysisData.analysis_summary.high_impact || 0}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>높은 기여도</div>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '15px', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                      <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffc107' }}>
+                        {analysisData.analysis_summary.medium_impact || 0}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>중간 기여도</div>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '15px', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                      <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#6c757d' }}>
+                        {analysisData.analysis_summary.low_impact || 0}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>낮은 기여도</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

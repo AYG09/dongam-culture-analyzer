@@ -90,10 +90,16 @@ export const RealtimeInputWithSave = ({
           onChange({ target: { value: localValue } });
         }
       } else {
+        // 저장 실패 시에도 lock 해제
+        await unlockField(fieldId);
+        setIsEditing(false);
         alert('저장에 실패했습니다.');
       }
     } catch (error) {
       console.error('Failed to save:', error);
+      // 예외 발생 시에도 lock 해제
+      await unlockField(fieldId);
+      setIsEditing(false);
       alert('저장에 실패했습니다.');
     } finally {
       setIsSaving(false);
