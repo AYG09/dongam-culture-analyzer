@@ -19,22 +19,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { password } = req.body
+    const { password, tempPassword } = req.body
     const clientIp = req.headers['x-forwarded-for'] || 'unknown'
+    const actualPassword = password || tempPassword
 
-    if (!password) {
+    if (!actualPassword) {
       return res.status(400).json({ 
         success: false, 
         error: '비밀번호를 입력해주세요.' 
       })
     }
 
-        // 관리자 비밀번호 확인
-    if (password === process.env.GATEWAY_ADMIN_PASSWORD) {
+    // 관리자 비밀번호 확인
+    if (actualPassword === process.env.GATEWAY_ADMIN_PASSWORD) {
       const sessionToken = generateToken()
       
       // 로그인 기록 저장
-      await logAccess(clientIp, req.headers['user-agent'], 'admin', password, true, null, sessionToken)
+      await logAccess(clientIp, req.headers['user-agent'], 'admin', actualPassword, true, null, sessionToken)
       
       return res.status(200).json({
         success: true,
@@ -48,12 +49,12 @@ export default async function handler(req, res) {
     const { data, error } = await supabase
       .from('temp_passwords')
       .select('*')
-      .eq('password', password)
+      .eq('password', actualPassword)
       .eq('is_active', true)
       .single()
 
     if (error || !data) {
-      await logAccess(clientIp, req.headers['user-agent'], 'unknown', password, false, '잘못된 비밀번호', null)
+      await logAccess(clientIp, req.headers['user-agent'], 'unknown', actualPassword, false, '잘못된 비밀번호', null)
       return res.status(401).json({
         success: false,
         error: '잘못된 비밀번호입니다.'
@@ -62,7 +63,7 @@ export default async function handler(req, res) {
 
     // 만료 확인
     if (new Date() > new Date(data.expires_at)) {
-      await logAccess(clientIp, req.headers['user-agent'], 'temp', password, false, '만료된 비밀번호', null)
+      await logAccess(clientIp, req.headers['user-agent'], 'temp', actualPassword, false, '만료된 비밀번호', null)
       return res.status(401).json({
         success: false,
         error: '만료된 비밀번호입니다.'
@@ -82,7 +83,7 @@ export default async function handler(req, res) {
     const sessionToken = generateToken()
     
     // 로그인 기록 저장
-    await logAccess(clientIp, req.headers['user-agent'], 'temp', password, true, null, sessionToken)
+    await logAccess(clientIp, req.headers['user-agent'], 'temp', actualPassword, true, null, sessionToken)
 
     return res.status(200).json({
       success: true,
@@ -94,7 +95,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Gateway auth error:', error)
-    await logAccess(clientIp, req.headers['user-agent'], 'error', password, false, error.message, null)
+    await logAccess(clientIp, req.headers['user-agent'], 'error', actualPassword, false, error.message, null)
     return res.status(500).json({
       success: false,
       error: '서버 오류가 발생했습니다.'
