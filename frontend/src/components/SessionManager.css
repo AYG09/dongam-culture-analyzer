@@ -341,22 +341,27 @@
   background: #5a6268;
 }
 
-.admin-section {
+.logout-section {
   text-align: center;
-  margin: 15px 0;
-  padding-top: 10px;
+  margin: 20px 0 10px 0;
+  padding-top: 15px;
   border-top: 1px solid #eee;
 }
 
-.admin-login-btn, .admin-panel-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
+.logout-btn {
+  padding: 10px 20px;
+  border: 1px solid #6c757d;
+  background: transparent;
+  color: #6c757d;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
   background-color: #6c757d;
   color: white;
-  transition: background-color 0.2s;
 }
 
 .admin-login-btn:hover, .admin-panel-btn:hover {

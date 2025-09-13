@@ -1,95 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import './SessionManager.css';
-import { getApiUrl, getNetworkInfo } from '../utils/networkUtils';
-import { useAuth } from '../hooks/useAuth';
-import { AdminLogin } from './AdminLogin';
-import { AdminPanel } from './AdminPanel';
-import AdminGateway from './AdminGateway';
+import { getApiUrl } from '../utils/networkUtils';
 
 export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
   const [mode, setMode] = useState('join');
   const [sessionCode, setSessionCode] = useState('');
   const [sessionName, setSessionName] = useState('');
   const [sessionDescription, setSessionDescription] = useState('');
-  const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [apiBase, setApiBase] = useState(import.meta.env.VITE_API_BASE_URL || '/api');
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
-  const [showGatewayPanel, setShowGatewayPanel] = useState(false);
-  const { isAuthenticated } = useAuth();
 
-  // Gateway 관리자 확인
-  const isGatewayAdmin = () => {
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('gateway-auth-token');
-        if (stored) {
-          const authData = JSON.parse(stored);
-          if (Date.now() < authData.expiresAt && authData.isAdmin) {
-            return true;
-          }
-        }
-      } catch (error) {
-        console.error('Gateway auth check error:', error);
-      }
-    }
-    return false;
-  };
-
-  // 세션 접속 URL 생성
-  const generateSessionUrl = (sessionCode) => {
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/?session=${sessionCode}`;
-  };
-
-  // QR코드 URL 생성 (Google Charts API 사용)
-  const generateQRCode = (sessionCode) => {
-    const sessionUrl = generateSessionUrl(sessionCode);
-    const encodedUrl = encodeURIComponent(sessionUrl);
-    return `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodedUrl}`;
-  };
-
-  // URL 복사 기능
-  const copyToClipboard = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      alert('URL이 클립보드에 복사되었습니다!');
-    } catch (err) {
-      // 클립보드 API가 지원되지 않는 경우 대체 방법
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      alert('URL이 클립보드에 복사되었습니다!');
-    }
-  };
-
-  // 세션 목록 로드
-  const loadSessions = async () => {
-    try {
-      const response = await fetch(`${apiBase}/sessions`);
-      if (response.ok) {
-        const data = await response.json();
-        const normalize = (s) => ({
-          code: s.code,
-          name: s.name,
-          description: s.description || '',
-          participantCount: s.participantCount ?? s.participant_count ?? 0,
-          createdAt: (s.createdAt ?? s.created_at ?? s.created) || s.createdAtSec || s.created_at_sec || s.created_ts || s.created_ts_sec,
-          lastActivity: s.lastActivity ?? s.last_access ?? s.lastAccess ?? s.last_access_at ?? null,
-        });
-        const normalized = Array.isArray(data?.sessions) ? data.sessions.map(normalize) : [];
-        setSessions(normalized);
-      }
-    } catch (error) {
-      console.error('Failed to load sessions:', error);
-    }
-  };
+  // 관리자 기능들은 메인 앱의 관리자 패널로 이동됨
 
   // 컴포넌트 마운트 시 동적 API URL 설정
   useEffect(() => {
@@ -105,11 +27,7 @@ export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
     updateApiBase();
   }, []);
 
-  useEffect(() => {
-    if (mode === 'list') {
-      loadSessions();
-    }
-  }, [mode, apiBase]);
+  // 관리자 전용 기능 제거로 불필요한 useEffect 삭제
 
   // 세션 참가
   const handleJoinSession = async (e) => {
@@ -184,53 +102,7 @@ export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
     }
   };
 
-  // 기존 세션 선택
-  const handleSelectExistingSession = async (selectedSession) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`${apiBase}/sessions/${selectedSession.code}/join`, {
-        method: 'POST',
-      });
-
-      if (response.ok) {
-        onSessionSelected(selectedSession.code);
-        localStorage.setItem('currentSessionCode', selectedSession.code);
-        localStorage.setItem('currentSessionName', selectedSession.name);
-      } else {
-        const errorData = await response.json();
-        setError(errorData.detail || '세션에 참가할 수 없습니다.');
-      }
-    } catch (error) {
-      setError('네트워크 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 날짜 포맷팅 (초/밀리초/ISO 문자열 안전 처리)
-  const formatDate = (value) => {
-    if (!value) return '-';
-    try {
-      let date;
-      if (typeof value === 'number') {
-        // 숫자: 초 또는 밀리초 추정
-        date = new Date(value < 2_000_000_000 ? value * 1000 : value);
-      } else if (typeof value === 'string') {
-        // 문자열: 파싱 시도 (ISO 등)
-        const parsed = Date.parse(value);
-        date = isNaN(parsed) ? new Date() : new Date(parsed);
-      } else if (value instanceof Date) {
-        date = value;
-      } else {
-        return '-';
-      }
-      return date.toLocaleString('ko-KR');
-    } catch {
-      return '-';
-    }
-  };
+  // 관리자 전용 기능들 제거됨
 
   if (currentSessionCode) {
     return null; // 이미 세션에 참가한 경우 컴포넌트를 숨김
@@ -255,38 +127,26 @@ export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
           >
             새 세션 생성
           </button>
-          {isGatewayAdmin() && (
-            <button 
-              className={mode === 'gateway' ? 'active admin-tab' : 'admin-tab'}
-              onClick={() => setMode('gateway')}
-            >
-              🔐 임시 비밀번호 관리
-            </button>
-          )}
-          <button 
-            className={mode === 'list' ? 'active' : ''}
-            onClick={() => setMode('list')}
-          >
-            활성 세션 목록
-          </button>
+          {/* 관리자 전용 탭들은 메인 앱의 관리자 패널에서만 접근 가능 */}
         </div>
 
-        <div className="admin-section">
-          {isAuthenticated ? (
-            <button 
-              className="admin-panel-btn"
-              onClick={() => setShowAdminPanel(true)}
-            >
-              🔐 관리자 패널
-            </button>
-          ) : (
-            <button 
-              className="admin-login-btn"
-              onClick={() => setShowAdminLogin(true)}
-            >
-              🔐 관리자
-            </button>
-          )}
+        {/* 로그아웃 버튼 추가 */}
+        <div className="logout-section">
+          <button 
+            className="logout-btn"
+            onClick={() => {
+              // Gateway 인증 토큰 제거
+              localStorage.removeItem('gateway-auth-token');
+              // 세션 정보도 정리
+              localStorage.removeItem('currentSessionCode');
+              localStorage.removeItem('currentSessionName');
+              // 페이지 새로고침하여 Gateway 로그인 화면으로 돌아가기
+              window.location.reload();
+            }}
+            title="로그아웃 - Gateway 인증 화면으로 돌아갑니다"
+          >
+            🚪 로그아웃
+          </button>
         </div>
 
         {error && <div className="error-message">{error}</div>}
@@ -353,56 +213,7 @@ export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
         )}
 
 
-        {mode === 'list' && (
-          <div className="sessions-list">
-            {sessions.length === 0 ? (
-              <p className="no-sessions">생성된 세션이 없습니다.</p>
-            ) : (
-              sessions.map((session) => (
-                <div key={session.code} className="session-card">
-                  <div className="session-header">
-                    <h3>{session.name}</h3>
-                    <span className="session-code">{session.code}</span>
-                  </div>
-                  {session.description && (
-                    <p className="session-description">{session.description}</p>
-                  )}
-                  <div className="session-meta">
-                    <span>생성: {formatDate(session.createdAt)}</span>
-                    <span>참가자: {session.participantCount}명</span>
-                  </div>
-                  <button 
-                    onClick={() => handleSelectExistingSession(session)}
-                    disabled={loading}
-                    className="primary-btn"
-                  >
-                    이 세션 선택
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {mode === 'gateway' && isGatewayAdmin() && (
-          <div className="gateway-panel-container">
-            <div className="gateway-info">
-              <h3>🔐 임시 비밀번호 관리</h3>
-              <p>워크샵, 데모, 테스트용 임시 비밀번호를 생성하고 관리할 수 있습니다.</p>
-            </div>
-            <AdminGateway />
-          </div>
-        )}
-
-        {/* 관리자 로그인 팝업 */}
-        {showAdminLogin && (
-          <AdminLogin onClose={() => setShowAdminLogin(false)} />
-        )}
-
-        {/* 관리자 패널 */}
-        {showAdminPanel && (
-          <AdminPanel onClose={() => setShowAdminPanel(false)} />
-        )}
+        {/* 관리자 기능들은 모두 메인 앱의 관리자 패널로 이동됨 */}
       </div>
     </div>
   );
