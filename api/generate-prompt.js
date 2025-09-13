@@ -1,56 +1,32 @@
 import { createClient } from '@supabase/supabase-js'
+import fs from 'fs/promises'
+import path from 'path'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 )
 
-// 동암정신 데이터 (정적)
-const spiritsData = {
-  "spirits": [
-    {
-      "id": "spirit_01",
-      "name": "불우재(不尤哉) 정신",
-      "description": "온갖 난관에도 좌절하지 않으며 하늘을 원망하지 않고 남이나 주변을 절대 탓하지 않는다.",
-      "image": "/culture_maps/불우재정신.png"
-    },
-    {
-      "id": "spirit_02", 
-      "name": "숭조위선 효우정신",
-      "description": "조상을 높여 소중히 여기고 부모에게 효도하며 형제 간에 우애한다.",
-      "image": "/culture_maps/숭조위선효우정신.png"
-    },
-    {
-      "id": "spirit_03",
-      "name": "불굴의 도전정신과 개척정신", 
-      "description": "고난과 시련 속에서도 좌절하지 않고 도전하며 새로운 길을 개척한다.",
-      "image": "/culture_maps/불굴의도전정신과개척정신.png"
-    },
-    {
-      "id": "spirit_04",
-      "name": "미래를 예측하는 통찰력",
-      "description": "시대의 흐름을 읽고 미래를 내다보는 혜안을 통해 더 나은 방향을 설정하고 준비한다.",
-      "image": "/culture_maps/미래를 예측하는 통찰.png"
-    },
-    {
-      "id": "spirit_05",
-      "name": "미풍양속의 계승",
-      "description": "아름답고 좋은 풍속을 지키며 후대에도 이어 나간다.",
-      "image": "/culture_maps/미풍양속의 계승.png"
-    },
-    {
-      "id": "spirit_06",
-      "name": "상생적 공존공영의 인화정신",
-      "description": "더불어 함께 잘 살아가기 위해 여러 사람이 서로 협력하고 화합한다.",
-      "image": "/culture_maps/상생적 공존공영의 인화정신.png"
-    },
-    {
-      "id": "spirit_07",
-      "name": "환경을 중시하는 사회적 책임경영",
-      "description": "환경을 중요하게 생각하는 경영을 통하여 사회적 가치 창출을 추구하는 책임경영을 한다.",
-      "image": "/culture_maps/환경을 중시하는 사회적 책임경영.png"
-    }
-  ]
+// JSON 로더 + 캐시: backend/modules/dongam_spirit.json
+const TTL_SECONDS = Number(process.env.PROMPT_CACHE_TTL_SECONDS || 60)
+let CACHE = { data: null, ts: 0 }
+
+function spiritsJsonPath() {
+  return path.join(process.cwd(), 'backend', 'modules', 'dongam_spirit.json')
+}
+
+async function loadSpirits() {
+  const now = Date.now() / 1000
+  if (CACHE.data && now - CACHE.ts < TTL_SECONDS) return CACHE.data
+  try {
+    const raw = await fs.readFile(spiritsJsonPath(), 'utf-8')
+    const json = JSON.parse(raw)
+    CACHE = { data: json, ts: now }
+    return json
+  } catch (e) {
+    console.error('[generate-prompt] Failed to load spirits json:', e)
+    return { spirits: [] }
+  }
 }
 
 // 프롬프트 생성 함수 (기존 로직 유지)
@@ -104,8 +80,9 @@ function buildPrompt(payload, spirit) {
   return prompt
 }
 
-function getSpiritById(spiritId) {
-  return spiritsData.spirits.find(s => s.id === spiritId)
+function getSpiritById(spiritId, data) {
+  const list = Array.isArray(data?.spirits) ? data.spirits : []
+  return list.find(s => s.id === spiritId)
 }
 
 export default async function handler(req, res) {
@@ -121,7 +98,8 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      // GET /api/spirits - 동암정신 목록 반환
+      // GET /api/generate-prompt → 동암정신 전체 데이터 반환
+      const spiritsData = await loadSpirits()
       res.status(200).json(spiritsData)
     } else if (req.method === 'POST') {
       // POST /api/generate-prompt - 프롬프트 생성
@@ -132,7 +110,8 @@ export default async function handler(req, res) {
         return
       }
       
-      const spirit = getSpiritById(spiritId)
+      const spiritsData = await loadSpirits()
+      const spirit = getSpiritById(spiritId, spiritsData)
       if (!spirit) {
         res.status(404).json({ error: 'Unknown spiritId' })
         return
