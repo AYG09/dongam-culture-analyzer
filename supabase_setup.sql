@@ -1,6 +1,8 @@
--- Gateway Access Logs 테이블 생성
-CREATE TABLE IF NOT EXISTS gateway_access_logs (
-    id SERIAL PRIMARY KEY,
+-- Gateway Access Logs 테이블 생성 (기존 테이블 삭제 후 재생성)
+DROP TABLE IF EXISTS gateway_access_logs;
+
+CREATE TABLE gateway_access_logs (
+    id BIGSERIAL PRIMARY KEY,
     ip_address VARCHAR(45) NOT NULL,
     user_agent TEXT,
     password_type VARCHAR(20) NOT NULL CHECK (password_type IN ('admin', 'temp', 'unknown', 'error')),
@@ -9,8 +11,14 @@ CREATE TABLE IF NOT EXISTS gateway_access_logs (
     failure_reason TEXT,
     session_token VARCHAR(255),
     metadata JSONB DEFAULT '{}',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 기존 테이블 구조 확인용 쿼리 (참고용)
+-- SELECT column_name, data_type, is_nullable, column_default 
+-- FROM information_schema.columns 
+-- WHERE table_name = 'gateway_access_logs' 
+-- ORDER BY ordinal_position;
 
 -- 인덱스 생성 (성능 최적화)
 CREATE INDEX IF NOT EXISTS idx_gateway_access_logs_success ON gateway_access_logs(success);

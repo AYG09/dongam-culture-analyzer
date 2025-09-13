@@ -34,10 +34,10 @@ export default async function handler(req, res) {
     if (actualPassword === process.env.GATEWAY_ADMIN_PASSWORD) {
       const sessionToken = generateToken()
       
-      // TODO: 로그인 기록 저장 (테이블 생성 후 활성화)
-      // logAccess(clientIp, req.headers['user-agent'], 'admin', actualPassword, true, null, sessionToken).catch(err => {
-      //   console.error('Admin login log failed:', err)
-      // })
+      // 로그인 기록 저장 (비동기이지만 실패해도 로그인은 성공)
+      logAccess(clientIp, req.headers['user-agent'], 'admin', actualPassword, true, null, sessionToken).catch(err => {
+        console.error('Admin login log failed:', err)
+      })
       
       return res.status(200).json({
         success: true,
@@ -56,10 +56,9 @@ export default async function handler(req, res) {
       .single()
 
     if (error || !data) {
-      // TODO: 로그인 기록 저장 (테이블 생성 후 활성화)
-      // logAccess(clientIp, req.headers['user-agent'], 'unknown', actualPassword, false, '잘못된 비밀번호', null).catch(err => {
-      //   console.error('Unknown password log failed:', err)
-      // })
+      logAccess(clientIp, req.headers['user-agent'], 'unknown', actualPassword, false, '잘못된 비밀번호', null).catch(err => {
+        console.error('Unknown password log failed:', err)
+      })
       return res.status(401).json({
         success: false,
         error: '잘못된 비밀번호입니다.'
@@ -68,10 +67,9 @@ export default async function handler(req, res) {
 
     // 만료 확인
     if (new Date() > new Date(data.expires_at)) {
-      // TODO: 로그인 기록 저장 (테이블 생성 후 활성화)
-      // logAccess(clientIp, req.headers['user-agent'], 'temp', actualPassword, false, '만료된 비밀번호', null).catch(err => {
-      //   console.error('Expired password log failed:', err)
-      // })
+      logAccess(clientIp, req.headers['user-agent'], 'temp', actualPassword, false, '만료된 비밀번호', null).catch(err => {
+        console.error('Expired password log failed:', err)
+      })
       return res.status(401).json({
         success: false,
         error: '만료된 비밀번호입니다.'
@@ -90,10 +88,10 @@ export default async function handler(req, res) {
 
     const sessionToken = generateToken()
     
-    // TODO: 로그인 기록 저장 (테이블 생성 후 활성화)
-    // logAccess(clientIp, req.headers['user-agent'], 'temp', actualPassword, true, null, sessionToken).catch(err => {
-    //   console.error('Temp password login log failed:', err)
-    // })
+    // 로그인 기록 저장
+    logAccess(clientIp, req.headers['user-agent'], 'temp', actualPassword, true, null, sessionToken).catch(err => {
+      console.error('Temp password login log failed:', err)
+    })
 
     return res.status(200).json({
       success: true,
@@ -116,10 +114,9 @@ export default async function handler(req, res) {
         hasAdminPassword: !!process.env.GATEWAY_ADMIN_PASSWORD
       }
     })
-    // TODO: 로그인 기록 저장 (테이블 생성 후 활성화)
-    // logAccess(clientIp, req.headers['user-agent'], 'error', actualPassword || 'unknown', false, error.message, null).catch(err => {
-    //   console.error('Error log failed:', err)
-    // })
+    logAccess(clientIp, req.headers['user-agent'], 'error', actualPassword || 'unknown', false, error.message, null).catch(err => {
+      console.error('Error log failed:', err)
+    })
     return res.status(500).json({
       success: false,
       error: '서버 오류가 발생했습니다.',
@@ -146,8 +143,8 @@ async function logAccess(ipAddress, userAgent, passwordType, passwordUsed, succe
         success: success,
         failure_reason: failureReason,
         session_token: sessionToken,
-        created_at: new Date().toISOString(),
         metadata: {}
+        // created_at은 DEFAULT NOW()로 자동 생성되도록 제외
       })
     
     if (error) {

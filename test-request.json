@@ -1,0 +1,5 @@
+{
+  "password": "testpass123",
+  "expireHours": 24,
+  "description": "테스트용"
+}
