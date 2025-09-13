@@ -11,7 +11,6 @@ export const RealtimeInputWithSave = ({
   onChange,
   ...props 
 }) => {
-  console.log(`[COMPONENT MOUNT] RealtimeInputWithSave fieldId: ${fieldId}, sessionCode: ${sessionCode}`);
   const [localValue, setLocalValue] = useState(externalValue);
   const [originalValue, setOriginalValue] = useState(externalValue);
   const [isEditing, setIsEditing] = useState(false);

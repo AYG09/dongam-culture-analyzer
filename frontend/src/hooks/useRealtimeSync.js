@@ -293,7 +293,9 @@ export const useRealtimeSync = (sessionCode) => {
   const isFieldLockedByMe = useCallback((fieldId) => {
     const fieldState = fieldStates[fieldId];
     if (!fieldState) return false;
-    return fieldState.lockedBy === userIdRef.current;
+    const isMyLock = fieldState.lockedBy === userIdRef.current;
+    console.log(`[LOCK CHECK] fieldId: ${fieldId}, lockedBy: "${fieldState.lockedBy}", myUserId: "${userIdRef.current}", isMyLock: ${isMyLock}`);
+    return isMyLock;
   }, [fieldStates]);
 
   // 필드 값 가져오기

@@ -7,9 +7,7 @@ import { useSession } from '../hooks/useSession.js';
 
 export default function Dashboard() {
   const { currentSessionCode } = useSession();
-  console.log(`[DASHBOARD] currentSessionCode: ${currentSessionCode}`);
   const [step, setStep] = useState(1);
-  console.log(`[DASHBOARD] current step: ${step}`);
   const [activityName, setActivityName] = useState('');
   const [coreText, setCoreText] = useState('');
   const [spiritId, setSpiritId] = useState('spirit_01');
