@@ -3,6 +3,24 @@
 let cachedNetworkInfo = null;
 let cacheExpiry = 0;
 const CACHE_DURATION = 30000; // 30초 캐시
+let warnedOnce = false; // 경고 스팸 방지
+
+function isLocalhost(hostname) {
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+}
+
+// 브라우저 fetch 타임아웃(AbortController 기반)
+async function fetchWithTimeout(resource, options = {}) {
+  const { timeoutMs = 3000, ...rest } = options;
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(resource, { ...rest, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(id);
+  }
+}
 
 /**
  * 백엔드에서 현재 네트워크 정보를 가져옴
@@ -16,15 +34,17 @@ export async function getNetworkInfo() {
   }
   
   try {
-    // 개발 환경에서는 network-info API를 호출하지 않고 바로 fallback 사용
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      // 개발 환경에서는 바로 fallback으로 진행
+    // SSR/테스트 환경 가드
+    if (typeof window === 'undefined' || !window.location) {
+      throw new Error('No window context - skip network info fetch');
+    }
+
+    // 개발 환경에서는 network-info API 호출 생략하고 바로 fallback 사용
+    if (isLocalhost(window.location.hostname)) {
       throw new Error('Development environment - skip network info fetch');
     }
-      
-    const response = await fetch('/api/network-info', {
-      timeout: 3000
-    });
+
+    const response = await fetchWithTimeout('/api/network-info', { timeoutMs: 3000 });
     
     if (response.ok) {
       const networkInfo = await response.json();
@@ -36,21 +56,27 @@ export async function getNetworkInfo() {
       return networkInfo;
     }
   } catch (error) {
-    console.warn('Failed to fetch network info, using fallback:', error.message);
+    if (!warnedOnce) {
+      console.warn('Failed to fetch network info, using fallback:', error && error.message ? error.message : String(error));
+      warnedOnce = true;
+    }
   }
   
   // 실패 시 기본값 반환 (환경에 따라)
-  const fallback = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? {
-    hostname: 'localhost',
-    local_ip: '127.0.0.1',
-    network_ip: '127.0.0.1', 
-    api_url: '/api'
-  } : {
-    hostname: window.location.hostname,
-    local_ip: window.location.hostname,
-    network_ip: window.location.hostname, 
-    api_url: '/api'
-  };
+  const hostname = (typeof window !== 'undefined' && window.location) ? window.location.hostname : 'localhost';
+  const fallback = isLocalhost(hostname)
+    ? {
+        hostname: 'localhost',
+        local_ip: '127.0.0.1',
+        network_ip: '127.0.0.1',
+        api_url: '/api',
+      }
+    : {
+        hostname,
+        local_ip: hostname,
+        network_ip: hostname,
+        api_url: '/api',
+      };
   
   cachedNetworkInfo = fallback;
   cacheExpiry = now + CACHE_DURATION;
