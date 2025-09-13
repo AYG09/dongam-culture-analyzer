@@ -96,12 +96,18 @@ export const AuthProvider = ({ children }) => {
         return data.sessions || [];
       }
 
+      if (response.status === 401 || response.status === 403) {
+        // 토큰이 유효하지 않음 → 자동 로그아웃 유도
+        console.warn('Admin token invalid. Forcing logout.');
+        logout();
+      }
+
       return [];
     } catch (error) {
       console.error('Failed to fetch all sessions:', error);
       return [];
     }
-  }, [isAuthenticated, adminInfo]);
+  }, [isAuthenticated, adminInfo, logout]);
 
   const deleteSession = useCallback(async (sessionCode) => {
     if (!isAuthenticated) return false;
