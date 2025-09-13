@@ -31,7 +31,8 @@ export default async function handler(req, res) {
         return res.status(403).json({ error: '관리자 권한이 필요합니다.' })
       }
 
-      // 세션 토큰 검증
+  // 세션 토큰 검증
+  // NOTE: gw_* 토큰은 admin/temp 모두 허용. 관리 작업 권한 분리는 필요 시 password_type 검사로 강화 가능.
       const now = Date.now()
       const TTL_MS = 24 * 60 * 60 * 1000 // 24시간
 
@@ -40,7 +41,8 @@ export default async function handler(req, res) {
         .select('session_token, success, password_type, created_at, last_used_at')
         .eq('session_token', token)
         .eq('success', true)
-        .eq('password_type', 'admin')
+        // 관리자 엔드포인트에서는 gw_* 토큰(관리자/임시 모두) 허용
+        // .eq('password_type', 'admin')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
