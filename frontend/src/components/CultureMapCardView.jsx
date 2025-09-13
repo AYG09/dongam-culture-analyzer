@@ -81,6 +81,19 @@ const CultureMapCardView = ({ analysisData, sessionCode, selectedSpirit }) => {
     };
   };
 
+  // element_id 정규화: '유형1' → '유형_1', '무형3' → '무형_3'
+  const normalizeElementId = (id) => {
+    if (!id || typeof id !== 'string') return id;
+    // 이미 언더스코어가 있으면 유지
+    if (id.includes('_')) return id;
+    // '유형' 또는 '무형' 뒤에 숫자만 오는 경우 언더스코어 삽입
+    const typeMatch = id.match(/^(유형|무형)(\d{1,2})$/);
+    if (typeMatch) {
+      return `${typeMatch[1]}_${typeMatch[2]}`;
+    }
+    return id;
+  };
+
   // LLM 분석 결과에서 영향받은 요소들 파싱
   const getAffectedElements = () => {
     console.log('analysisData:', analysisData); // 디버깅용
@@ -88,7 +101,11 @@ const CultureMapCardView = ({ analysisData, sessionCode, selectedSpirit }) => {
     // 분석 데이터가 존재하면 (빈 배열이어도) 그대로 사용
     if (analysisData?.affected_elements !== undefined) {
       console.log('Using real data:', analysisData.affected_elements); // 디버깅용
-      return analysisData.affected_elements;
+      // element_id 정규화 적용
+      return (analysisData.affected_elements || []).map((el) => ({
+        ...el,
+        element_id: normalizeElementId(el.element_id),
+      }));
     }
     
     // 분석 데이터가 아예 없을 때만 샘플 데이터 사용
@@ -1552,6 +1569,15 @@ const CultureMapCardView = ({ analysisData, sessionCode, selectedSpirit }) => {
               }}>
                 📋 기본 정보
               </h5>
+              <div style={{ 
+                color: '#6c757d',
+                margin: '0 0 12px 0',
+                fontSize: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+              </div>
               <div style={{
                 backgroundColor: '#ffffff',
                 border: '2px solid #e9ecef',
