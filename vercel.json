@@ -12,10 +12,6 @@
 
   "rewrites": [
     {
-      "source": "/api/spirits",
-      "destination": "/api/generate-prompt"
-    },
-    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     }

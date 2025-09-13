@@ -1,30 +1,17 @@
 import { createClient } from '@supabase/supabase-js'
-import fs from 'fs/promises'
-import path from 'path'
+import spiritsData from './data/dongam_spirit.json' assert { type: 'json' }
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 )
 
-// JSON 로더 + 캐시: backend/modules/dongam_spirit.json
-const TTL_SECONDS = Number(process.env.PROMPT_CACHE_TTL_SECONDS || 60)
-let CACHE = { data: null, ts: 0 }
-
-function spiritsJsonPath() {
-  return path.join(process.cwd(), 'backend', 'modules', 'dongam_spirit.json')
-}
-
+// 데이터는 번들 시 JSON import로 포함됩니다.
 async function loadSpirits() {
-  const now = Date.now() / 1000
-  if (CACHE.data && now - CACHE.ts < TTL_SECONDS) return CACHE.data
   try {
-    const raw = await fs.readFile(spiritsJsonPath(), 'utf-8')
-    const json = JSON.parse(raw)
-    CACHE = { data: json, ts: now }
-    return json
+    return spiritsData
   } catch (e) {
-    console.error('[generate-prompt] Failed to load spirits json:', e)
+    console.error('[generate-prompt] Failed to access spirits json:', e)
     return { spirits: [] }
   }
 }
