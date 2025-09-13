@@ -120,6 +120,7 @@ export const useRealtimeSync = (sessionCode) => {
         const data = await res.json();
         const serverLast = Number(data.lastUpdate || 0);
         if (serverLast > (lastUpdateRef.current || 0)) {
+          console.log(`[POLL UPDATE] fields:`, data.fields, `values:`, data.values);
           setFieldStates(data.fields || {});
           setFieldValues(prev => ({ ...prev, ...(data.values || {}) }));
           setLastUpdate(serverLast);
@@ -175,6 +176,7 @@ export const useRealtimeSync = (sessionCode) => {
   // 필드 잠금 요청 (unlockField 이후에 선언해야 의존성 오류 없음)
   const lockField = useCallback(async (fieldId) => {
     if (!sessionCodeRef.current) return false;
+    console.log(`[LOCK ATTEMPT] fieldId: ${fieldId}, userId: ${userIdRef.current}, sessionCode: ${sessionCodeRef.current}`);
     try {
       const response = await fetch(`${dynamicApiBase}/fields/lock`, {
         method: 'POST',
@@ -186,6 +188,7 @@ export const useRealtimeSync = (sessionCode) => {
         }),
       });
       const result = await response.json();
+      console.log(`[LOCK RESPONSE] status: ${response.status}, result:`, result);
       if (result.success) {
         // 5분 후 자동 잠금 해제
         if (lockTimeouts.current[fieldId]) {

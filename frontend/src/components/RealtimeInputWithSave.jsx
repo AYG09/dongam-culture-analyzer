@@ -19,6 +19,7 @@ export const RealtimeInputWithSave = ({
   const inputRef = useRef(null);
   
   const {
+    userId,
     lockField,
     unlockField,
     updateFieldValue,
@@ -51,9 +52,11 @@ export const RealtimeInputWithSave = ({
 
   // 편집 시작
   const handleStartEdit = async () => {
+    console.log(`[EDIT START] fieldId: ${fieldId}, current userId: ${userId}, lockedByOther: ${lockedByOther}, lockedByMe: ${isFieldLockedByMe(fieldId)}`);
     try {
       // 서버에 잠금 시도를 위임 (만료 락/자기 락 정리 포함)
       const success = await lockField(fieldId);
+      console.log(`[EDIT START] lockField result: ${success}`);
       if (success) {
         setIsEditing(true);
         setOriginalValue(localValue);
