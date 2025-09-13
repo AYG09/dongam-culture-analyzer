@@ -60,6 +60,7 @@ const gatewayFetch = async (endpoint, options = {}) => {
     return { success: true, data };
   } catch (error) {
     console.error('Gateway API Error:', error);
+    console.error('Request details:', { url, options });
     return { success: false, error: error.message };
   }
 };
@@ -239,6 +240,7 @@ const AdminGateway = () => {
 
   // 세션 목록 로드
   const loadSessions = async (search = '', page = 1) => {
+    console.log('🔍 세션 로딩 시작 - 관리자 인증:', isAdmin(), getAuthToken());
     setSessionsLoading(true);
     try {
       const params = new URLSearchParams({
@@ -256,11 +258,13 @@ const AdminGateway = () => {
       });
 
       if (result.success) {
+        console.log('✅ 세션 로드 성공:', result.data);
         setSessions(result.data.sessions || []);
         setSessionTotal(result.data.total || 0);
         setSessionPage(page);
         setError('');
       } else {
+        console.error('❌ 세션 로드 실패:', result);
         setError(result.error || '세션 목록을 불러올 수 없습니다.');
       }
     } catch (error) {
