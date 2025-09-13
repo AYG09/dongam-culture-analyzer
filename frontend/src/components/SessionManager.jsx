@@ -75,7 +75,16 @@ export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
       const response = await fetch(`${apiBase}/sessions`);
       if (response.ok) {
         const data = await response.json();
-        setSessions(data.sessions || []);
+        const normalize = (s) => ({
+          code: s.code,
+          name: s.name,
+          description: s.description || '',
+          participantCount: s.participantCount ?? s.participant_count ?? 0,
+          createdAt: (s.createdAt ?? s.created_at ?? s.created) || s.createdAtSec || s.created_at_sec || s.created_ts || s.created_ts_sec,
+          lastActivity: s.lastActivity ?? s.last_access ?? s.lastAccess ?? s.last_access_at ?? null,
+        });
+        const normalized = Array.isArray(data?.sessions) ? data.sessions.map(normalize) : [];
+        setSessions(normalized);
       }
     } catch (error) {
       console.error('Failed to load sessions:', error);
@@ -200,9 +209,27 @@ export const SessionManager = ({ onSessionSelected, currentSessionCode }) => {
     }
   };
 
-  // 날짜 포맷팅
-  const formatDate = (timestamp) => {
-    return new Date(timestamp * 1000).toLocaleString('ko-KR');
+  // 날짜 포맷팅 (초/밀리초/ISO 문자열 안전 처리)
+  const formatDate = (value) => {
+    if (!value) return '-';
+    try {
+      let date;
+      if (typeof value === 'number') {
+        // 숫자: 초 또는 밀리초 추정
+        date = new Date(value < 2_000_000_000 ? value * 1000 : value);
+      } else if (typeof value === 'string') {
+        // 문자열: 파싱 시도 (ISO 등)
+        const parsed = Date.parse(value);
+        date = isNaN(parsed) ? new Date() : new Date(parsed);
+      } else if (value instanceof Date) {
+        date = value;
+      } else {
+        return '-';
+      }
+      return date.toLocaleString('ko-KR');
+    } catch {
+      return '-';
+    }
   };
 
   if (currentSessionCode) {
