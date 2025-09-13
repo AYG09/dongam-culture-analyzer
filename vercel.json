@@ -5,7 +5,8 @@
   "functions": {
     "api/**": {
       "includeFiles": [
-        "backend/modules/dongam_spirit.json"
+        "backend/modules/dongam_spirit.json",
+        "api/data/dongam_spirit.json"
       ]
     }
   },
