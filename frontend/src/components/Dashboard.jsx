@@ -565,12 +565,12 @@ export default function Dashboard() {
     try {
       // 1) as-is
       return tryParse(llmResult);
-    } catch (_) {
+    } catch (e1) {
       try {
         // 2) strip code fences
         const s1 = stripCodeFence(llmResult);
         return tryParse(s1);
-      } catch (_) {
+      } catch (e2) {
         try {
           // 3) extract first JSON object inside text
           const obj = extractFirstJsonObject(llmResult);

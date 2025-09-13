@@ -672,7 +672,7 @@ const CultureMapCardView = ({ analysisData, sessionCode, selectedSpirit }) => {
                 gap: '4px'
               }}>
                 {/* 기여도 시각적 표시 */}
-                {[...Array(3)].map((_, i) => (
+                {[...Array(3)].map((__unused, i) => (
                   <div
                     key={i}
                     style={{

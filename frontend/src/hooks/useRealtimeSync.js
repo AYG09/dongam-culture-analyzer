@@ -138,7 +138,30 @@ export const useRealtimeSync = (sessionCode) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 필드 잠금 요청
+  // 필드 잠금 해제
+  const unlockField = useCallback(async (fieldId) => {
+    if (!sessionCodeRef.current) return;
+    // 타임아웃 정리
+    if (lockTimeouts.current[fieldId]) {
+      clearTimeout(lockTimeouts.current[fieldId]);
+      delete lockTimeouts.current[fieldId];
+    }
+    try {
+      await fetch(`${dynamicApiBase}/fields/unlock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionCode: sessionCodeRef.current,
+          fieldId,
+          userId: userIdRef.current,
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to unlock field:', error);
+    }
+  }, []);
+
+  // 필드 잠금 요청 (unlockField 이후에 선언해야 의존성 오류 없음)
   const lockField = useCallback(async (fieldId) => {
     if (!sessionCodeRef.current) return false;
     try {
@@ -168,29 +191,6 @@ export const useRealtimeSync = (sessionCode) => {
       return false;
     }
   }, [unlockField]);
-
-  // 필드 잠금 해제
-  const unlockField = useCallback(async (fieldId) => {
-    if (!sessionCodeRef.current) return;
-    // 타임아웃 정리
-    if (lockTimeouts.current[fieldId]) {
-      clearTimeout(lockTimeouts.current[fieldId]);
-      delete lockTimeouts.current[fieldId];
-    }
-    try {
-      await fetch(`${dynamicApiBase}/fields/unlock`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionCode: sessionCodeRef.current,
-          fieldId,
-          userId: userIdRef.current,
-        }),
-      });
-    } catch (error) {
-      console.error('Failed to unlock field:', error);
-    }
-  }, []);
 
   // 필드 값 업데이트
   const updateFieldValue = useCallback(async (fieldId, value) => {
