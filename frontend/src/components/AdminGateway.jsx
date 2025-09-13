@@ -129,6 +129,7 @@ const AdminGateway = () => {
       return;
     }
     loadPasswords();
+    loadSessions(); // 세션도 초기 로드!
   }, []);
 
   // 임시 비밀번호 목록 로드
@@ -300,8 +301,8 @@ const AdminGateway = () => {
   // 탭 변경 시 데이터 로드
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    if (tab === 'sessions' && sessions.length === 0) {
-      loadSessions();
+    if (tab === 'sessions') {
+      loadSessions(); // 항상 세션 새로고침
     }
   };
 
